@@ -1,6 +1,6 @@
 /************************************************************************
 
-		Copyright (c) 2003 Brad Martin.
+        Copyright (c) 2003 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -18,7 +18,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with OpenSPC; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-This file contains the exported interface for libospcemu.
+This file contains the exported interface for libopenspc.
 
  ************************************************************************/
 
