@@ -1,8 +1,8 @@
 CC = gcc
-#CFLAGS = -W -Wall -pedantic -s -O3 -mcpu=pentiumpro -march=pentiumpro
-#LDFLAGS = -lz -lm -L../libopenspc -s
-CFLAGS = -W -Wall -pedantic -g
-LDFLAGS = -lz -lm -L../libopenspc
+CFLAGS = -W -Wall -pedantic -s -O3 -mcpu=pentiumpro -march=pentiumpro
+LDFLAGS = -lz -lm -L../libopenspc -s
+#CFLAGS = -W -Wall -pedantic -g
+#LDFLAGS = -lz -lm -L../libopenspc
 INSTALL_PATH = /usr/local
 
 INSTALL_BIN_PATH = $(INSTALL_PATH)/bin
