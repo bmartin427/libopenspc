@@ -57,7 +57,7 @@ specific implementations and prototypes are subject to change.
 
 int                     keyed_on;
 int                     keys;       /* 8-bits for 8 voices 			*/
-struct voice_state 	    voice_state[ 8 ];
+voice_state_type        voice_state[ 8 ];
 
 /* Noise stuff */
 int		                noise_cnt;
@@ -145,10 +145,10 @@ void DSP_Update                     /* Mix one sample of audio      */
     int                 v;
     int                 vl;
     int                 vr;
-    struct voice_state *vp;
-    struct src_dir *    sd;
+    voice_state_type *  vp;
+    src_dir_type *      sd;
     
-    sd = ( struct src_dir * )&SPC_RAM[ ( int )DSPregs[ 0x5D ] << 8 ];
+    sd = ( src_dir_type * )&SPC_RAM[ ( int )DSPregs[ 0x5D ] << 8 ];
     
     /* Check for reset */
     if( DSPregs[ 0x6C ] & 0x80 )

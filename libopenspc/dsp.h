@@ -1,6 +1,6 @@
 /************************************************************************
 
-		Copyright (c) 2003 Brad Martin.
+        Copyright (c) 2003 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -28,46 +28,59 @@ to change.
 
  ************************************************************************/
 
-#ifndef DSP_H
-#define DSP_H
+#if !defined _DSP_H
+#define _DSP_H
 
-struct voice_state
+/*========== TYPES ==========*/
+
+typedef enum                        /* ADSR state type              */
 {
-	unsigned long samp_id;	/* sample ID# at time sample was keyed on.
-				   (lower 16-bits = start address,
-				    upper 16-bits = loop address) */
-	signed long smp1,smp2;	/* last two values decoded (for filter) */
-	int mem_ptr,		/* where in memory is sample data to read */
-	    header_cnt,		/* how long before another header (0-8) */
-	    range,		/* last header's range */
-	    filter,		/* last header's filter */
-	    end,		/* 1=end before next block, 3=loop instead */
-	    half,		/* 0=upper half,1=lower half */
-	    mixfrac,		/* fractional part of sample position */
-	    envcnt,		/* how long 'till update envelope */
-	    envx,		/* last envelope height (0-0x7FFF) */
-	    pitch,		/* last known pitch (4096 -> 32000Hz) */
-	    sampptr,		/* Where in sampbuf we are */
-	    on_cnt;		/* Is it time to turn on yet? */
-	enum
-	{
-		ATTACK=0,DECAY,SUSTAIN,RELEASE
-	} envstate;		/* current envelope state */
-	short sampbuf[4];	/* Buffer for Gaussian interpolation */
-};
+    ATTACK,
+    DECAY,
+    SUSTAIN,
+    RELEASE
+} env_state_t32;
 
-struct src_dir {unsigned short vptr,lptr;};
+typedef struct                      /* Voice state type             */
+{
+    unsigned long    samp_id;       /* Sample ID#                   */
+    signed long     smp1;           /* Last sample (for BRR filter) */
+    signed long     smp2;           /* Second-to-last sample decoded*/
+    int             mem_ptr;        /* Sample data memory pointer   */
+    int             header_cnt;     /* Bytes before new header (0-8)*/
+    int             range;          /* Last header's range          */
+    int             filter;         /* Last header's filter         */
+    int             end;            /* End or loop after block      */
+    int             half;           /* Active nybble of BRR         */
+    int             mixfrac;        /* Fractional part of smpl pstn */
+    int             envcnt;         /* Counts to envelope update    */
+    int             envx;           /* Last env height (0-0x7FFF)   */
+    int             pitch;          /* Sample pitch (4096->32000Hz) */
+    int             sampptr;        /* Where in sampbuf we are      */
+    int             on_cnt;         /* Is it time to turn on yet?   */
+    env_state_t32   envstate;       /* Current envelope state       */
+    short           sampbuf[ 4 ];   /* Buffer for Gaussian interp   */
+} voice_state_type;
 
-/**** Global Variables :P ****/
-extern int keyed_on,keys;	/* 8-bits for 8 voices */
-extern struct voice_state voice_state[8];
-extern const int TS_CYC;
+typedef struct                      /* Source directory entry       */
+{
+    unsigned short  vptr;           /* Ptr to start of sample data  */
+    unsigned short  lptr;           /* Loop pointer in sample data  */
+} src_dir_type;
 
-void DSP_Update(short *);
-void DSP_Reset(void);
-void DSP_Init(void);
+/*========== CONSTANTS ==========*/
 
-/**** Macros ****/
+extern const int    TS_CYC;
+
+/*========== VARIABLES ==========*/
+
+extern int          keyed_on;
+extern int          keys;           /* 8-bits for 8 voices          */
+extern voice_state_type
+                    voice_state[ 8 ];
+
+/*========== MACROS ==========*/
+
 /* The functions to actually read and write to the DSP registers must be
    implemented by the specific SPC core implementation, as this is too 
    specific to generalize.  However, by defining these macros, we can
@@ -84,4 +97,14 @@ void DSP_Init(void);
 /* All other writes should store the value in the addressed register as
    expected. */
 
-#endif /* #ifndef DSP_H */
+/*========== PROCEDURES ==========*/
+
+void DSP_Update                     /* Mix one sample of audio      */
+    (
+    short *             sound_ptr   /* Pointer to mix audio into    */
+    );
+
+void DSP_Reset                      /* Reset emulated DSP           */
+    ( void );
+
+#endif  /* _DSP_H */
