@@ -1,0 +1,20 @@
+* Look into possible wrong noise (FF3 phantom train?)
+
+* Look at one cycle always executed for NULL ptr and no cycles
+
+* Look at cycle counter wraparound
+    --FIXED?
+
+* Fix/test ENDX behavior (Earthworm Jim 2)
+    --FIXED?
+
+* Add library functions to get info for i.e. IT dumping, visualization, etc.
+
+* Add example program for IT dumping (helps test above extra functions)
+
+* Add functions to tweak DSP operation, set options, disable features, etc.
+
+* Cache DSP parameters/other speed optimizations, when everything else is
+  correct.
+
+* Write proper documentation

@@ -1,0 +1,80 @@
+Note: this readme file is just a quick little rundown of what you'll find in
+this package.  Full documentation has yet to be written. :)
+
+License notice: most of OpenSPC is licensed under the LGPL.  Details of this
+license can be found in this directory, in the 'COPYING' file.  Parts of
+this program derived from SNEeSe are classified under a different license
+however.  Details of this license may be found in the 'LICENSE' file in the
+libopenspc/SNEeSe directory.  See the 'README' file in libopenspc/SNEeSe for
+more info on this distinction.
+
+Warranty notice: This package comes with no warranty, expressed or implied,
+not even the implied warranty of merchantability or fitness for a
+particular purpose.  In other words, here's some code, it may or may not do
+something useful.  Have fun with it, but don't blame me if something goes
+wrong. :)
+
+*** NOTICE NOTICE NOTICE ***
+The function of OpenSPC has changed since the last release several years
+ago.  *ALL* of the code, except that which came from SNEeSe, has been
+rewritten from scratch.  The primary function of this code now is a library
+usable for other projects involving SPC emulation.  Specifically, all of the
+functionality you would expect from an SPC emulation is there, without any
+pesky interface. :)  I don't think it'll be missed because I'm not good at
+writing interfaces anyway.  Distributing the 'back-end' code as a library
+hopefully permits other coders who are make a better end package.  Although
+this library was developed under x86 linux, the library should be relatively
+portable.  Most likely other x86 platforms (such as windows) should work
+with minimal effort.  The majority of OpenSPC is written in C and should be
+portable to other architectures as well; however, this would require
+replacing SNEeSe's x86 ASM SPC-CPU core with one implemented in C/C++
+(Snes9x?).  Due to better organization than the previous OpenSPC code, even
+this should not be overly difficult.
+
+This library is as accurate an SPC-DSP emulation as I know how to make.  It
+contains no speed hacks, no workarounds, etc., as are commonly found in
+other players and emulators.  As such, you may find that it uses much more
+CPU than you would expect.  Some of this is due to the fact that this
+software has yet to be optimized in any way, but some of it will never go
+away due to the attention to detail in emulation accuracy.  If you want an
+SPC player to run on your 386, this probably isn't it. :)  However, the plus
+side to this is that this is probably the most accurate SPC player
+available.  It has been used as a reference implementation for several
+features in other SNES-related programs.
+
+Please be aware this is a prerelease snapshot.  Not all features are fully
+implemented, and some of the library interfaces are pretty rough.  See
+'to-do.txt' for planned inclusions in the final release.  If a feature you
+want is not there, feel free to suggest it to me (contact info below). 
+However, some possible features are being deliberately excluded from the
+library (i.e. ID666 tag support), because I feel they are better placed in
+user applications that use this library, and not the library itself. 
+Because this is a prerelease, I make no promises that the library interfaces
+will not change prior to final release.  However, every effort will be made
+to maintain a compatible interface once that happens.
+
+In the examples directory, an example player can be found which performs
+only very basic playing capability.  To keep it as simple as possible, it
+writes the output data to stdout, requiring a pipe through a program capable
+of playing 16-bit stereo 32kHz raw PCM data.  I myself typically use the
+command 'esdcat -r 32000' to pipe the data into.  There is also a set of
+options to specify to the sox 'play' command to make it work if you dislike
+esd, although I don't know them off the top of my head.  The title of the
+file to be played should be specified on the command line.  If more than one
+file is specified, they will be played in a shuffled order.
+
+In the same directory another program can be found as an example of
+communication with the emulated SPC.  However, this program will probably be
+useless to you without the test ROM I was using it on.  This program is
+primarily for my benefit, and may disappear before the released version.
+
+Eventually, I hope to have an IT-dumper program in the examples directory as
+well.  Most likely this functionality will not be part of the library
+itself, but some features to allow it to be possible will.  Look for this
+functionality possibly appearing in future snapshots or the released version.
+
+Have fun! :)
+
+    Brad Martin
+    FatlXception in #zsnes on irc.freenode.net
+    bmartin at umr dot edu
