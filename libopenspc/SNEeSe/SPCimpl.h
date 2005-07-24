@@ -1,6 +1,6 @@
 /**************************************************************************
 
-		Copyright (c) 2003 Brad Martin.
+        Copyright (c) 2003-2005 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -13,53 +13,51 @@ its license.  See the file 'LICENSE' in this directory for more information.
 
  **************************************************************************/
 
-#ifndef SPCIMPL_H
-#define SPCIMPL_H
+#if !defined( _SPCIMPL_H )
+#define _SPCIMPL_H
 
-extern unsigned char _SPCRAM[65536],_SPC_DSP[256];
-extern unsigned long __SPC_PC,__SPC_SP,_SPC_Cycles,_TotalCycles,
-  _Map_Byte,_Map_Address;
-extern unsigned short __SPC_YA,_SPC_T0_target,_SPC_T1_target,_SPC_T2_target;
-extern unsigned char __SPC_A,__SPC_Y,__SPC_X,__SPC_PSW,
-  _SPC_PORT0R,_SPC_PORT1R,_SPC_PORT2R,_SPC_PORT3R,
-  _SPC_PORT0W,_SPC_PORT1W,_SPC_PORT2W,_SPC_PORT3W,
-  _SPC_T0_counter,_SPC_T1_counter,_SPC_T2_counter,
-  _N_flag,_H_flag,_I_flag,_B_flag,_Z_flag,_P_flag,_V_flag,_C_flag;
-extern void *SPC_FFC0_Address,*SPC_Code_Base;
-extern long SPC_PAGE;
-extern unsigned long _SPC_T0_cycle_latch,_SPC_T1_cycle_latch,
-                     _SPC_T2_cycle_latch;
+/*========== INCLUDES ==========*/
 
-void _Reset_SPC(void);
-void _SPC_START(void);
-unsigned char _get_SPC_PSW(void);
-void SPC_SetState(int pc,int a,int x,int y,int p,int sp,void *ram);
-void _Wrap_SPC_Cyclecounter(void);
+#include "sneese_spc.h"
 
-#define SPC_Run(c)\
-{\
-	_SPC_Cycles+=(c);\
-	if((signed long)_TotalCycles<0)\
-	    _Wrap_SPC_Cyclecounter();\
-	__asm__("pusha;call _SPC_START;popa");\
-}
+/*========== DEFINES ==========*/
 
-#define SPC_Reset()\
-{\
-	_Reset_SPC();\
-}
+#define DSPregs         SPC_DSP
+#define SPC_RAM         SPCRAM
 
-#define SPC_RAM _SPCRAM
-#define DSPregs _SPC_DSP
+/*========== MACROS ==========*/
 
-#define WritePort0(x) _SPC_PORT0R=x
-#define WritePort1(x) _SPC_PORT1R=x
-#define WritePort2(x) _SPC_PORT2R=x
-#define WritePort3(x) _SPC_PORT3R=x
+#define ReadPort0()     SPC_READ_PORT_W( 0 )
+#define ReadPort1()     SPC_READ_PORT_W( 1 )
+#define ReadPort2()     SPC_READ_PORT_W( 2 )
+#define ReadPort3()     SPC_READ_PORT_W( 3 )
 
-#define ReadPort0() _SPC_PORT0W
-#define ReadPort1() _SPC_PORT1W
-#define ReadPort2() _SPC_PORT2W
-#define ReadPort3() _SPC_PORT3W
+#define SPC_Reset()                                                 \
+    {                                                               \
+    Reset_SPC();                                                    \
+    SPC_CPU_cycle_multiplicand = 1;                                 \
+    SPC_CPU_cycle_divisor      = 1;                                 \
+    SPC_CPU_cycles_mul         = 0;                                 \
+    }
 
-#endif /* #ifndef SPCIMPL_H */
+#define SPC_Run( c )    SPC_START( c )
+
+#define WritePort0( x ) SPC_WRITE_PORT_R( 0, x )
+#define WritePort1( x ) SPC_WRITE_PORT_R( 1, x )
+#define WritePort2( x ) SPC_WRITE_PORT_R( 2, x )
+#define WritePort3( x ) SPC_WRITE_PORT_R( 3, x )
+
+/*========== PROCEDURES ==========*/
+
+void SPC_SetState
+    (
+    int                 pc,
+    int                 a,
+    int                 x,
+    int                 y,
+    int                 p,
+    int                 sp,
+    void *              ram
+    );
+
+#endif /* _SPCIMPL_H */

@@ -1,6 +1,7 @@
 SUBDIRS = SNEeSe
 
-INCLUDES = -ISNEeSe
+AM_CFLAGS = -W -Wall -pedantic -Wno-long-long
+INCLUDES  = -ISNEeSe
 
 lib_LTLIBRARIES = libopenspc.la
 libopenspc_la_LIBADD = -lm -lz SNEeSe/libSPCimpl.la

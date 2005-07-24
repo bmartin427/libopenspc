@@ -57,11 +57,11 @@ In the examples directory, an example player can be found which performs
 only very basic playing capability.  To keep it as simple as possible, it
 writes the output data to stdout, requiring a pipe through a program capable
 of playing 16-bit stereo 32kHz raw PCM data.  I myself typically use the
-command 'esdcat -r 32000' to pipe the data into.  There is also a set of
-options to specify to the sox 'play' command to make it work if you dislike
-esd, although I don't know them off the top of my head.  The title of the
-file to be played should be specified on the command line.  If more than one
-file is specified, they will be played in a shuffled order.
+command 'aplay -f S16_LE -r 32000 -c 2' to pipe the data into.  There is also
+a set of options to specify to the sox 'play' command to make it work if you
+don't have ALSA, although I don't know them off the top of my head.  The
+title of the file to be played should be specified on the command line.  If
+more than one file is specified, they will be played in a shuffled order.
 
 In the same directory another program can be found as an example of
 communication with the emulated SPC.  However, this program will probably be
@@ -77,4 +77,4 @@ Have fun! :)
 
     Brad Martin
     FatlXception in #zsnes on irc.freenode.net
-    bmartin at umr dot edu
+    ospc at fatlxception dot no-ip dot org

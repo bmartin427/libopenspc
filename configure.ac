@@ -13,10 +13,6 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
-AC_PATH_PROG([NASM],[nasm],[missing])
-if test "$NASM" = "missing"; then
-        AC_MSG_ERROR([unable to find nasm])
-fi
 
 # Check libraries.
 AC_CHECK_LIB([z],[gzopen],,AC_MSG_ERROR([libopenspc requires zlib]))
