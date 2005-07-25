@@ -1,6 +1,6 @@
 /************************************************************************
 
-        Copyright (c) 2003 Brad Martin.
+        Copyright (c) 2003-2005 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -34,39 +34,39 @@ to change.
 /*========== TYPES ==========*/
 
 typedef enum                        /* ADSR state type              */
-{
+    {
     ATTACK,
     DECAY,
     SUSTAIN,
     RELEASE
-} env_state_t32;
+    } env_state_t32;
 
 typedef struct                      /* Voice state type             */
-{
-    unsigned long    samp_id;       /* Sample ID#                   */
+    {
+    unsigned short  mem_ptr;        /* Sample data memory pointer   */
+    int             end;            /* End or loop after block      */
+    int             envcnt;         /* Counts to envelope update    */
+    env_state_t32   envstate;       /* Current envelope state       */
+    int             envx;           /* Last env height (0-0x7FFF)   */
+    int             filter;         /* Last header's filter         */
+    int             half;           /* Active nybble of BRR         */
+    int             header_cnt;     /* Bytes before new header (0-8)*/
+    int             mixfrac;        /* Fractional part of smpl pstn */
+    int             on_cnt;         /* Is it time to turn on yet?   */
+    int             pitch;          /* Sample pitch (4096->32000Hz) */
+    int             range;          /* Last header's range          */
+    unsigned long   samp_id;        /* Sample ID#                   */
+    int             sampptr;        /* Where in sampbuf we are      */
     signed long     smp1;           /* Last sample (for BRR filter) */
     signed long     smp2;           /* Second-to-last sample decoded*/
-    int             mem_ptr;        /* Sample data memory pointer   */
-    int             header_cnt;     /* Bytes before new header (0-8)*/
-    int             range;          /* Last header's range          */
-    int             filter;         /* Last header's filter         */
-    int             end;            /* End or loop after block      */
-    int             half;           /* Active nybble of BRR         */
-    int             mixfrac;        /* Fractional part of smpl pstn */
-    int             envcnt;         /* Counts to envelope update    */
-    int             envx;           /* Last env height (0-0x7FFF)   */
-    int             pitch;          /* Sample pitch (4096->32000Hz) */
-    int             sampptr;        /* Where in sampbuf we are      */
-    int             on_cnt;         /* Is it time to turn on yet?   */
-    env_state_t32   envstate;       /* Current envelope state       */
     short           sampbuf[ 4 ];   /* Buffer for Gaussian interp   */
-} voice_state_type;
+    } voice_state_type;
 
 typedef struct                      /* Source directory entry       */
-{
+    {
     unsigned short  vptr;           /* Ptr to start of sample data  */
     unsigned short  lptr;           /* Loop pointer in sample data  */
-} src_dir_type;
+    } src_dir_type;
 
 /*========== CONSTANTS ==========*/
 
@@ -92,19 +92,19 @@ extern voice_state_type
 
 /* This macro must be used INSTEAD OF a normal write to register 0x7C
    (ENDX) */
-#define DSP_WRITE_7C(x) DSPregs[0x7C]=0
+#define DSP_WRITE_7C( x )   ( DSPregs[ 0x7C ] = 0 )
 
 /* All other writes should store the value in the addressed register as
    expected. */
 
 /*========== PROCEDURES ==========*/
 
+void DSP_Reset                      /* Reset emulated DSP           */
+    ( void );
+
 void DSP_Update                     /* Mix one sample of audio      */
     (
     short *             sound_ptr   /* Pointer to mix audio into    */
     );
-
-void DSP_Reset                      /* Reset emulated DSP           */
-    ( void );
 
 #endif  /* _DSP_H */
