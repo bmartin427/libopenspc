@@ -31,7 +31,6 @@ specific implementations and prototypes are subject to change.
 
 #include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "SPCimpl.h"
 #include "dsp.h"
@@ -152,6 +151,7 @@ echo_ptr = 0;
 keys             = 0;
 keyed_on         = 0;
 noise_cnt        = 0;
+noise_lev        = 0x4000;
 DSPregs[ 0x6C ] |= 0xE0;
 DSPregs[ 0x4C ]  = 0;
 DSPregs[ 0x5C ]  = 0;
@@ -207,15 +207,13 @@ DSPregs[ 0x7C ] &= ~DSPregs[ 0x4C ];
    voice 0?  Jurassic Park 2 does this.  For now, using outx of zero for first
    voice. */
 outx = 0;
-if( DSPregs[ 0x3D ] )
+/* Same table for noise and envelope */
+noise_cnt -= ENVCNT[ DSPregs[ 0x6C ] & 0x1F ];
+if( noise_cnt <= 0 )
     {
-    /* Same table for noise and envelope */
-    noise_cnt -= ENVCNT[ DSPregs[ 0x6C ] & 0x1F ];
-    if( noise_cnt <= 0 )
-        {
-        noise_cnt = CNT_INIT;
-        noise_lev = ( rand() & 0xFFFF ) - 0x8000;
-        }
+    noise_cnt = CNT_INIT;
+    noise_lev = ( ( ( noise_lev << 13 ) ^ ( noise_lev << 14 ) ) & 0x4000 )
+              | ( noise_lev >> 1                                         );
     }
 outl  = 0;
 outr  = 0;
@@ -494,7 +492,7 @@ for( v = 0, m = 1, V = 0; v < 8; v++, V += 16, m <<= 1 )
 #ifdef DBG_PMOD
         fprintf( stderr, "Noise enabled, voice %d\n", v );
 #endif
-        outx = noise_lev;
+        outx = ( signed short )( noise_lev << 1 );
         }
     else
         {
