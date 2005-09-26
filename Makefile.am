@@ -1,5 +1,5 @@
 SUBDIRS = libopenspc examples
 EXTRA_DIST = \
-	autogen.sh \
 	depcomp \
-	ltmain.sh
+	ltmain.sh \
+	to-do.txt

@@ -8,3 +8,6 @@ libSPCimpl_la_SOURCES = \
 	SPCimpl.h \
 	sneese_spc.h \
 	spc700.c
+
+EXTRA_DIST = \
+	LICENSE
