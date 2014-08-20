@@ -1,6 +1,6 @@
 /************************************************************************
 
-        Copyright (c) 2003 Brad Martin.
+        Copyright (c) 2003-2014 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -71,5 +71,12 @@ char OSPC_ReadPort3(void);
    written with OSPC_WritePortX will not be available to be read using
    OSPC_ReadPortX.  Only that data which the SPC posts on these ports is
    visible from the outside. */
+
+void OSPC_SetChannelMask(int mask);
+/* Used to selectively disable some DSP channels.  Channels which have a
+   corresponding bit set in the channel mask will *not* be heard. */
+
+int OSPC_GetChannelMask(void);
+/* Used to retrieve the current channel mask value. */
 
 #endif /* #ifndef OPENSPC_H */

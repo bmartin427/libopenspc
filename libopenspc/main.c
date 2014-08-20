@@ -1,6 +1,6 @@
 /************************************************************************
 
-        Copyright (c) 2003 Brad Martin.
+        Copyright (c) 2003-2014 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -59,7 +59,7 @@ static int Load_SPC(void *buf,size_t size)
     if(size<sizeof(spc_file))
         return 1;
     spc_file=(struct SPC_FILE *)buf;
-            
+
     if(memcmp(buf,ident,strlen(ident)))
         return 1;
     SPC_SetState(((int)spc_file->PCh<<8)+spc_file->PCl,spc_file->A,
@@ -90,11 +90,11 @@ static int Load_ZST(void *buf,size_t size)
                  junk4[916],
                  DSP[256];
     } *zst_file;
-    
+
     if(size<sizeof(struct ZST_FILE))
         return 1;
     zst_file=(struct ZST_FILE *)buf;
-    
+
     if(memcmp(buf,ident,strlen(ident)))
         return 1;
     p=zst_file->P;
@@ -258,7 +258,7 @@ static int Load_S9X(void *buf,size_t size)
             }
             foundRAM=1;
         }
-        
+
         while(blen>bufsize)
         {
             GZ_Read(obuf,bufsize,zsp);
@@ -266,7 +266,7 @@ static int Load_S9X(void *buf,size_t size)
         }
         GZ_Read(obuf,blen,zsp);
     }
-    
+
     GZ_Close(zsp);
     free(obuf);
     if(!foundRAM||!foundRegs)
@@ -291,6 +291,7 @@ int OSPC_Init(void *buf, size_t size)
     int start,len;
 #endif
     mix_left=0;
+    channel_mask = 0;
     SPC_Reset();
     DSP_Reset();
     ret=Load_SPC(buf,size);
@@ -324,7 +325,7 @@ int OSPC_Init(void *buf, size_t size)
 int OSPC_Run(int cyc, short *s_buf, int s_size)
 {
     int i,buf_inc=s_buf?2:0;
-    
+
     if((cyc<0)||((s_buf!=NULL)&&(cyc>=(s_size>>2)*TS_CYC+mix_left)))
     {   /* Buffer size is the limiting factor */
         s_size&=~3;
@@ -338,7 +339,7 @@ int OSPC_Run(int cyc, short *s_buf, int s_size)
         mix_left=0;
         return s_size;
     }
-    
+
     /* Otherwise, use the cycle count */
     if(cyc<mix_left)
     {
@@ -404,4 +405,12 @@ char OSPC_ReadPort2(void)
 char OSPC_ReadPort3(void)
 {
     return ReadPort3();
+}
+
+void OSPC_SetChannelMask(int mask) {
+  channel_mask = mask;
+}
+
+int OSPC_GetChannelMask(void) {
+  return channel_mask;
 }

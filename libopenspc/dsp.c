@@ -1,6 +1,6 @@
 /************************************************************************
 
-        Copyright (c) 2003-2005 Brad Martin.
+        Copyright (c) 2003-2014 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -54,12 +54,13 @@ specific implementations and prototypes are subject to change.
 
 /*========== VARIABLES ==========*/
 
+int                     channel_mask;
 int                     keyed_on;
-int                     keys;       /* 8-bits for 8 voices 			*/
+int                     keys;
 voice_state_type        voice_state[ 8 ];
 
 /* Noise stuff */
-int		                noise_cnt;
+int	                noise_cnt;
 int                     noise_lev;
 
 /* These are for the FIR echo filter */
@@ -80,12 +81,12 @@ const int               TS_CYC = CPU_RATE / SAMP_FREQ;
 static const int *      G1 = &gauss[ 256 ];
 static const int *      G2 = &gauss[ 512 ];
 static const int *      G3 = &gauss[ 255 ];
-static const int *      G4 = &gauss[ -1  ];    
+static const int *      G4 = &gauss[ -1  ];
 
 static const int        mask = 0xFF;
 
 /* This table is for envelope timing.  It represents the number of counts
-   that should be subtracted from the counter each sample period (32kHz). 
+   that should be subtracted from the counter each sample period (32kHz).
    The counter starts at 30720 (0x7800). */
 static const int        CNT_INIT = 0x7800;
 static const int        ENVCNT[ 0x20 ]
@@ -421,7 +422,7 @@ for( v = 0, m = 1, V = 0; v < 8; v++, V += 16, m <<= 1 )
             }
 
 #ifdef DBG_BRR
-        fprintf( 
+        fprintf(
                stderr,
                "V%d: shifted delta=%04X\n",
                v,
@@ -544,23 +545,24 @@ for( v = 0, m = 1, V = 0; v < 8; v++, V += 16, m <<= 1 )
                );
 #endif
         }
-    
+
     /* Advance the sample position for next update. */
     vp->mixfrac += vp->pitch;
-    
+
     outx = ( ( outx * envx ) >> 11 ) & ~1;
     DSPregs[ V + 9 ] = outx >> 8;
 
     vl = ( ( ( int )( signed char )DSPregs[ V     ] ) * outx ) >> 7;
     vr = ( ( ( int )( signed char )DSPregs[ V + 1 ] ) * outx ) >> 7;
-    outl += vl;
-    outr += vr;
-    if( DSPregs[ 0x4D ] & m )
-        {
+    if (!(m & channel_mask)) {
+      outl += vl;
+      outr += vr;
+      if (DSPregs[0x4D] & m) {
         echol += vl;
         echor += vr;
-        }
+      }
     }
+  }
 outl = ( outl * ( signed char )DSPregs[ 0x0C ] ) >> 7;
 outr = ( outr * ( signed char )DSPregs[ 0x1C ] ) >> 7;
 
@@ -753,7 +755,7 @@ if( voice_state[ v ].envstate == RELEASE )
     if( envx <= 0 )
         {
         envx = 0;
-        keys &= ~( 1 << v ); 
+        keys &= ~( 1 << v );
         return -1;
         }
     voice_state[ v ].envx = envx;

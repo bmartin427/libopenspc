@@ -1,6 +1,6 @@
 /************************************************************************
 
-        Copyright (c) 2003-2005 Brad Martin.
+        Copyright (c) 2003-2014 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -74,15 +74,19 @@ extern const int    TS_CYC;
 
 /*========== VARIABLES ==========*/
 
-extern int          keyed_on;
-extern int          keys;           /* 8-bits for 8 voices          */
+/* The following three variables are all bitfields with one bit corresponding
+   to each of the 8 DSP channels. */
+extern int          channel_mask;   /* 1 -> channel muted           */
+extern int          keyed_on;       /* 1 -> channel requested on    */
+extern int          keys;           /* 1 -> channel audible         */
+
 extern voice_state_type
                     voice_state[ 8 ];
 
 /*========== MACROS ==========*/
 
 /* The functions to actually read and write to the DSP registers must be
-   implemented by the specific SPC core implementation, as this is too 
+   implemented by the specific SPC core implementation, as this is too
    specific to generalize.  However, by defining these macros, we can
    generalize the DSP's behavior while staying out of the SPC's internals,
    by requiring that the SPC core must use these macros at the appropriate
