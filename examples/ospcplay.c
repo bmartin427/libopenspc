@@ -1,6 +1,6 @@
 /************************************************************************
 
-		Copyright (c) 2003 Brad Martin.
+		Copyright (c) 2003-2014 Brad Martin.
 
 This file is part of the OpenSPC example program set.
 
@@ -30,6 +30,7 @@ line: they will be played in shuffled order.
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -38,75 +39,114 @@ line: they will be played in shuffled order.
 
 #include <openspc.h>
 
-#define BUFSIZE 32000
-#undef USE_MMAP    /* Nonportable, apparently */
+#define BUFSIZE_1S (32000 * sizeof(short) * 2)  /* one second of audio */
 
-#define Process(b,s) write(STDOUT_FILENO,b,s);
 
-int main(int argc,char **argv)
-{
-	int fd,f,mmapped=1,*list;
-	off_t size;
-	void *ptr,*buf;
-	char c;
-	
-	if(argc<2)
-	{
-		printf("Please specify at least one filename to play!\n");
-		exit(1);
-	}
-	list=malloc((argc-1)*sizeof(int));
-	list[0]=1;
-	srand(time(NULL));
-	for(f=2;f<argc;f++)
-	{
-		fd=rand()%f;
-		list[f-1]=list[fd];
-		list[fd]=f;
-	}
-	buf=malloc(BUFSIZE);
-	fcntl(STDIN_FILENO,F_SETFL,O_NONBLOCK);
-	fprintf(stderr,"Press RETURN to change songs\n");
-	for(f=0;f<argc-1;f++)
-	{
-		fprintf(stderr,"Now playing '%s'...\n",argv[list[f]]);
-		fd=open(argv[list[f]],O_RDONLY);
-		if(fd<0)
-		{
-			fprintf(stderr,"\nUnable to open file '%s'!\n",argv[1]);
-			continue;
-		}
-		size=lseek(fd,0,SEEK_END);
+static int GetIntArg(int argc, char** argv, int* index, const char* op) {
+  char* endptr = NULL;
+  int result;
+  ++(*index);
+  if (*index >= argc) {
+    fprintf(stderr, "%s requires an argument!", op);
+    exit(1);
+  }
+  result = strtol(argv[*index], &endptr, 0);
+  if (endptr == argv[*index]) {
+    fprintf(stderr, "Unable to parse %s argument: %s", op, argv[*index]);
+    exit(1);
+  }
+  return result;
+}
 
-#ifdef USE_MMAP   /* Nonportable, apparently */
-        ptr=mmap(NULL,size,PROT_READ,MAP_SHARED,fd,0);
-		if(ptr==MAP_FAILED)
-#endif
-		{
-            lseek(fd,0,SEEK_SET);
-            ptr=malloc(size);
-            read(fd,ptr,size);
-            mmapped=0;
-        }
-  
-        close(fd);        
-		if((fd=OSPC_Init(ptr,size)))
-		{
-			fprintf(stderr,"\nOSPC_Init returned %d!\n",fd);
-			continue;
-		}
-#ifdef USE_MMAP
-		if(mmapped)
-		    munmap(ptr,size);
-		else
-#endif
-            free(ptr);
 
-		while((read(STDIN_FILENO,&c,1)<=0)||(c!='\n'))
-		{
-			size=OSPC_Run(-1,buf,BUFSIZE);
-			Process(buf,size);
-		}
-	}
-	return 0;
+int main(int argc, char **argv) {
+  int fd;
+  int f;
+  int* list;
+  int first_file;
+  int n_files;
+  int randomize = 0;
+  int limit_seconds = 0;
+  off_t size;
+  void *ptr;
+  void *buf;
+  char c;
+
+  /* When this loop ends, first_file will point to the first non-option
+     argument. */
+  for (first_file = 1; first_file < argc; ++first_file) {
+    if (!strcmp(argv[first_file], "-h") ||
+        !strcmp(argv[first_file], "--help")) {
+      fprintf(stderr, "Usage: %s [options] <file1> [file2...]\n",
+              argv[0]);
+      fprintf(stderr, " where [options] are any of the following:\n");
+      fprintf(stderr, "  -r       Randomize song order\n");
+      fprintf(stderr, "  -s SECS  End playback after this many seconds\n");
+      return 0;
+    } else if (!strcmp(argv[first_file], "-r")) {
+      randomize = 1;
+    } else if (!strcmp(argv[first_file], "-s")) {
+      limit_seconds = GetIntArg(argc, argv, &first_file, "-s");
+    } else {
+      // First file.
+      break;
+    }
+  }
+
+  n_files = argc - first_file;
+  if (n_files < 1) {
+    fprintf(stderr, "Please specify at least one filename to play!\n");
+    exit(1);
+  }
+  list = malloc(n_files * sizeof(int));
+  for (f = 0; f < n_files; ++f) {
+    list[f] = first_file + f;
+  }
+  if (randomize) {
+    srand(time(NULL));
+    for (f = 0; f < n_files; ++f) {
+      int t = list[f];
+      fd = rand() % n_files;
+      list[f] = list[fd];
+      list[fd] = t;
+    }
+  }
+  buf = malloc(BUFSIZE_1S);
+  fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+  fprintf(stderr, "Press RETURN to change songs\n");
+  for (f = 0; f < n_files; f++) {
+    fprintf(stderr, "Now playing '%s'...\n", argv[list[f]]);
+    fd = open(argv[list[f]], O_RDONLY);
+    if (fd < 0) {
+      fprintf(stderr, "\nUnable to open file '%s'!\n", argv[1]);
+      continue;
+    }
+    size = lseek(fd, 0, SEEK_END);
+
+    lseek(fd, 0, SEEK_SET);
+    ptr = malloc(size);
+    if (read(fd, ptr, size) < size) {
+      fprintf(stderr, "\nError reading file %s!\n", argv[1]);
+      continue;
+    }
+
+    close(fd);
+    if ((fd = OSPC_Init(ptr, size))) {
+      fprintf(stderr, "\nOSPC_Init returned %d!\n", fd);
+      continue;
+    }
+    free(ptr);
+
+    for (int elapsed_seconds = 0;
+         (limit_seconds <= 0) || (elapsed_seconds < limit_seconds);
+         ++elapsed_seconds) {
+      if ((read(STDIN_FILENO, &c, 1) > 0) && (c == '\n')) { break; }
+      size = OSPC_Run(-1, buf, BUFSIZE_1S);
+      if (write(STDOUT_FILENO, buf, size) < size) {
+        fprintf(stderr, "\nLost output data!\n");
+      }
+    }
+  }
+
+  return 0;
 }

@@ -1,4 +1,7 @@
-AM_CFLAGS = -W -Wall -pedantic -Wno-long-long
+# Copyright (c) 2003-2014 Brad Martin.
+
+AM_CFLAGS = -std=c11 -W -Wall -pedantic -Werror \
+            -Wno-unused-result
 
 bin_PROGRAMS = ospcplay
 noinst_PROGRAMS = spccomm
