@@ -66,6 +66,7 @@ int main(int argc, char **argv) {
   int first_file;
   int n_files;
   int randomize = 0;
+  int mask = 0;
   int limit_seconds = 0;
   off_t size;
   void *ptr;
@@ -81,10 +82,13 @@ int main(int argc, char **argv) {
               argv[0]);
       fprintf(stderr, " where [options] are any of the following:\n");
       fprintf(stderr, "  -r       Randomize song order\n");
+      fprintf(stderr, "  -m MASK  Set muted channel bitmask (0-255)\n");
       fprintf(stderr, "  -s SECS  End playback after this many seconds\n");
       return 0;
     } else if (!strcmp(argv[first_file], "-r")) {
       randomize = 1;
+    } else if (!strcmp(argv[first_file], "-m")) {
+      mask = GetIntArg(argc, argv, &first_file, "-m");
     } else if (!strcmp(argv[first_file], "-s")) {
       limit_seconds = GetIntArg(argc, argv, &first_file, "-s");
     } else {
@@ -136,6 +140,8 @@ int main(int argc, char **argv) {
       continue;
     }
     free(ptr);
+
+    OSPC_SetChannelMask(mask);
 
     for (int elapsed_seconds = 0;
          (limit_seconds <= 0) || (elapsed_seconds < limit_seconds);
