@@ -572,9 +572,10 @@ outr = ( outr * ( signed char )DSPregs[ 0x1C ] ) >> 7;
 #ifdef DBG_ECHO
 fprintf(
        stderr,
-       "Echo delay=%dms, feedback=%d%%\n",
+       "Echo delay=%dms, feedback=%d%%, mask=0x%02X\n",
        DSPregs[ 0x7D ] * 16,
-       ( ( signed char )DSPregs[ 0x0D ] * 100 ) / 0x7F
+       ( ( signed char )DSPregs[ 0x0D ] * 100 ) / 0x7F,
+       DSPregs[0x4D]
        );
 #endif
 
