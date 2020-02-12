@@ -1,12 +1,14 @@
 #                                               -*- Autoconf -*-
+# Copyright 2005-2020 Brad Martin.
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.59)
-AC_INIT(libopenspc, 0.3.99, ospc@fatlxception.no-ip.org)
+AC_PREREQ([2.69])
+AC_INIT([libopenspc],[0.3.99],[ospc@fatlxception.org])
+AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_SRCDIR([libopenspc/dsp.c])
 AC_CONFIG_SRCDIR([examples/ospcplay.c])
 AC_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 
 # Checks for programs.
 AC_PROG_CC
@@ -34,7 +36,7 @@ AC_FUNC_MMAP
 AC_CHECK_FUNCS([memset munmap strtol])
 
 AC_CONFIG_FILES([
-	libopenspc/Makefile 
+	libopenspc/Makefile
 	libopenspc/SNEeSe/Makefile
 	examples/Makefile
 	Makefile])

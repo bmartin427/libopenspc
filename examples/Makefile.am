@@ -6,5 +6,5 @@ AM_CFLAGS = -std=c11 -W -Wall -pedantic -Werror \
 bin_PROGRAMS = ospcplay
 noinst_PROGRAMS = spccomm
 
-INCLUDES = -I../libopenspc
+AM_CPPFLAGS = -I../libopenspc
 LDADD = $(top_builddir)/libopenspc/libopenspc.la

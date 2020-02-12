@@ -1,9 +1,10 @@
-# Copyright (c) 2003-2014 Brad Martin.
+# Copyright (c) 2003-2020 Brad Martin.
 
 # SNEeSe has some warnings I don't intend to resolve.
 AM_CFLAGS = -std=c11 -W -Wall -pedantic -Werror \
-	    -Wno-unused-parameter -Wno-sign-compare
-INCLUDES  = -I..
+	    -Wno-unused-parameter -Wno-sign-compare \
+	    -Wno-implicit-fallthrough -Wno-array-bounds
+AM_CPPFLAGS = -I..
 
 noinst_LTLIBRARIES = libSPCimpl.la
 
