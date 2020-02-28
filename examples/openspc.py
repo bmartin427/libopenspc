@@ -1,6 +1,6 @@
 ##########################################################################
 #
-#         Copyright (c) 2014 Brad Martin.
+#         Copyright (c) 2014-2020 Brad Martin.
 #
 # This file is part of OpenSPC.
 #
@@ -25,7 +25,18 @@
 import ctypes
 
 
-libopenspc = ctypes.cdll.LoadLibrary("libopenspc.so.0")
+try:
+    # If we're installed this should work.
+    libopenspc = ctypes.cdll.LoadLibrary("libopenspc.so.0")
+except OSError:
+    # See if we're running from the build directory.
+    import os.path
+    lib = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "libopenspc", ".libs", "libopenspc.so.0")
+    if not os.path.exists(lib):
+        raise
+    libopenspc = ctypes.cdll.LoadLibrary(lib)
 
 
 def init(buf):
@@ -71,10 +82,10 @@ def write_port(port, data):
     f(ctypes.c_byte(data))
 
 
-def read_port(port, data):
+def read_port(port):
     """This method is used to receive communications from the SPC.  port should
     be in the range 0-3, corresponding to the SPC's four ports used to send
-    output to teh CPU, available to write from $F4-$F7 in the SPC's address
+    output to the CPU, available to write from $F4-$F7 in the SPC's address
     space, and to read from $2140-$2143 in the CPU's address space.  Returns
     the data written to the corresponding port by the SPC.  Note that these
     ports are entirely separate from the ports written to with write_port.
@@ -97,6 +108,6 @@ def set_channel_mask(mask):
     libopenspc.OSPC_SetChannelMask(ctypes.c_int(mask))
 
 
-def get_channel_mask(mask):
+def get_channel_mask():
     """Used to retrieve the current channel mask value."""
     return libopenspc.OSPC_GetChannelMask()
