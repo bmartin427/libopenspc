@@ -46,12 +46,9 @@ except ImportError:
                                  'libopenspc'))
     import openspc
 
-_SAMPLE_FREQ = 32000
-
 _BUFS_PER_SEC = 13
-_BUF_SAMPLES = _SAMPLE_FREQ // _BUFS_PER_SEC
-_BYTES_PER_SAMPLE = 2 * 2
-_BUF_BYTES = _BUF_SAMPLES * _BYTES_PER_SAMPLE
+_BUF_SAMPLES = openspc.SAMPLE_FREQ // _BUFS_PER_SEC
+_BUF_BYTES = _BUF_SAMPLES * openspc.BYTES_PER_SAMPLE
 
 
 def play_file(filename, outfile, mask=None, seconds=None):
@@ -71,7 +68,7 @@ def play_file(filename, outfile, mask=None, seconds=None):
         if (sys.stdin in select.select([sys.stdin], [], [], 0)[0]) and \
            (sys.stdin.read(1) == '\n'):
             break
-        outfile.write(openspc.run(-1, _BUF_BYTES))
+        outfile.write(openspc.run(_BUF_BYTES))
         outfile.flush()
         bufs_emitted += 1
 
@@ -98,7 +95,7 @@ def main():
             ['aplay',
              '-f', 'S16_LE',
              '-c', '2',
-             '-r', str(_SAMPLE_FREQ),
+             '-r', str(openspc.SAMPLE_FREQ),
              '--buffer-size', str(_BUF_SAMPLES)],
             stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'))
         outfile = aplay.stdin

@@ -37,6 +37,10 @@ except OSError:
     libopenspc = ctypes.cdll.LoadLibrary(lib)
 
 
+SAMPLE_FREQ = 32000       # Hz
+BYTES_PER_SAMPLE = 2 * 2  # 16-bit, stereo
+
+
 def init(buf):
     """Load a new state into the emulator.
 
@@ -51,22 +55,22 @@ def init(buf):
         raise RuntimeError('Error %d from OSPC_Init()' % ret)
 
 
-def run(cyc, s_size):
+def run(s_size, cyc=None):
     """Perform the actual emulation.
 
-    `cyc` is the number of cycles desired to execute.
+    `s_size` is the maximum of bytes (not samples) of audio output to generate.
 
-    `s_size` is the desired number of bytes (not samples) of audio output.
+    `cyc` is an optional limit on the number of CPU cycles to execute.
     Execution will stop when either cyc cycles have been executed, or s_size
-    bytes have been output, whichever comes first.  If the number of cycles
-    executed does not matter, pass a negative cyc value, and s_size will be
-    used instead to determine the time to run.
+    bytes have been output, whichever comes first.
 
     Returns a bytes instance containing the output data.
     """
     out_buf = bytes(s_size)
     out_size = libopenspc.OSPC_Run(
-        ctypes.c_int(cyc), ctypes.c_char_p(out_buf), ctypes.c_int(s_size))
+        ctypes.c_int(cyc if cyc is not None else -1),
+        ctypes.c_char_p(out_buf),
+        ctypes.c_int(s_size))
     return out_buf[:out_size]
 
 
