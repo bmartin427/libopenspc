@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 ##########################################################################
 #
-#         Copyright (c) 2003-2014 Brad Martin.
+#         Copyright (c) 2003-2020 Brad Martin.
 #
 # This file is part of OpenSPC.
 #
@@ -29,8 +29,8 @@ multiple files on the command line; they can either be played in order or
 shuffled.
 """
 
+import argparse
 import math
-import optparse
 import os
 import random
 import select
@@ -38,35 +38,38 @@ import signal
 import subprocess
 import sys
 
-import openspc
+try:
+    import openspc
+except ImportError:
+    # Fixup path if we're not installed to run from the build directory.
+    sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                 'libopenspc'))
+    import openspc
 
 _SAMPLE_FREQ = 32000
 
 _BUFS_PER_SEC = 13
-_BYTES_PER_SEC = _SAMPLE_FREQ * 2 * 2
-_BUF_BYTES = _BYTES_PER_SEC / _BUFS_PER_SEC
+_BUF_SAMPLES = _SAMPLE_FREQ // _BUFS_PER_SEC
+_BYTES_PER_SAMPLE = 2 * 2
+_BUF_BYTES = _BUF_SAMPLES * _BYTES_PER_SAMPLE
 
 
 def play_file(filename, outfile, mask=None, seconds=None):
     with open(filename, 'rb') as f:
         buf = f.read()
-    result = openspc.init(buf)
-    if result:
-        print >>sys.stderr, 'openspc.init returned %d!', result
-        return
-
+    openspc.init(buf)
     if mask is not None:
         openspc.set_channel_mask(mask)
 
     buf_limit = None
     if seconds is not None:
-        buf_limit = math.ceil(seconds * _BUFS_PER_SEC)
+        buf_limit = int(math.ceil(seconds * _BUFS_PER_SEC))
     bufs_emitted = 0
     while True:
         if (buf_limit is not None) and (bufs_emitted >= buf_limit):
             break
-        if ((sys.stdin in select.select([sys.stdin], [], [], 0)[0]) and
-            (sys.stdin.read(1) == '\n')):
+        if (sys.stdin in select.select([sys.stdin], [], [], 0)[0]) and \
+           (sys.stdin.read(1) == '\n'):
             break
         outfile.write(openspc.run(-1, _BUF_BYTES))
         outfile.flush()
@@ -74,37 +77,35 @@ def play_file(filename, outfile, mask=None, seconds=None):
 
 
 def main():
-    parser = optparse.OptionParser(
-        description=__doc__,
-        usage="Usage: %prog [options] <file1> [file2...]")
-    parser.add_option('-r', '--randomize', action='store_true',
-                      help='Randomize song order')
-    parser.add_option('-m', '--mask', type='int',
-                      help='Set muted channel bitmask (0-255)')
-    parser.add_option('-s', '--seconds', type='float',
-                      help='End playback after this many seconds')
-    parser.add_option('-o', '--output',
-                      help='Write to output file, or "-" for stdout')
-    opts, args = parser.parse_args()
-    if not args:
-        parser.error('Please specify at least one filename to play!')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-r', '--randomize', action='store_true',
+                        help='Randomize song order')
+    parser.add_argument('-m', '--mask', type=int,
+                        help='Set muted channel bitmask (0-255)')
+    parser.add_argument('-s', '--seconds', type=float,
+                        help='End playback after this many seconds')
+    parser.add_argument('-o', '--output',
+                        help='Write to output file, or "-" for stdout')
+    parser.add_argument('filename', nargs='+',
+                        help='One or more files to play')
+    args = parser.parse_args()
 
-    if opts.randomize:
-        random.shuffle(args)
+    if args.randomize:
+        random.shuffle(args.filename)
 
-    if opts.output is None:
+    if args.output is None:
         aplay = subprocess.Popen(
             ['aplay',
              '-f', 'S16_LE',
              '-c', '2',
              '-r', str(_SAMPLE_FREQ),
-             '--buffer-size', str(_SAMPLE_FREQ / _BUFS_PER_SEC)],
+             '--buffer-size', str(_BUF_SAMPLES)],
             stdin=subprocess.PIPE, stderr=open(os.devnull, 'w'))
         outfile = aplay.stdin
-    elif opts.output == '-':
+    elif args.output == '-':
         outfile = sys.stdout
     else:
-        outfile = open(opts.output, 'wb')
+        outfile = open(args.output, 'wb')
 
     # You would think try/except on KeyboardInterrupt would be sufficient, but
     # that only seems to work some of the time.  Perhaps it depends on if we
@@ -112,13 +113,14 @@ def main():
     # to catch the cases that still slip through.
     signal.signal(signal.SIGINT, lambda signal, frame: sys.exit(0))
 
-    print >>sys.stderr, 'Press RETURN to change songs'
-    for filename in args:
-        print >>sys.stderr, "Now playing '%s'..." % filename
+    print('Press RETURN to change songs', file=sys.stderr)
+    for filename in args.filename:
+        print("Now playing '%s'..." % filename, file=sys.stderr)
         try:
-            play_file(filename, outfile, mask=opts.mask, seconds=opts.seconds)
+            play_file(filename, outfile, mask=args.mask, seconds=args.seconds)
         except KeyboardInterrupt:
             sys.exit(0)
+
 
 if __name__ == '__main__':
     main()
