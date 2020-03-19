@@ -24,30 +24,31 @@
 
 import ctypes
 
-
-try:
-    # If we're installed this should work.
-    libopenspc = ctypes.cdll.LoadLibrary("libopenspc.so.0")
-except OSError:
-    # See if we're running from the build directory.
-    import os.path
-    lib = os.path.join(os.path.dirname(__file__), ".libs", "libopenspc.so.0")
-    if not os.path.exists(lib):
-        raise
-    libopenspc = ctypes.cdll.LoadLibrary(lib)
-
-
 SAMPLE_FREQ = 32000       # Hz
 BYTES_PER_SAMPLE = 2 * 2  # 16-bit, stereo
 
+libopenspc = None
 
-def init(buf):
+
+def init(buf, libpath=None):
     """Load a new state into the emulator.
 
     `buf` is a bytes instance containing the image to be loaded.  It can be an
     SPC file, or a ZSNES or Snes9x savestate (autodetected).
+
+    `libpath` is an explicit path to the libopenspc library to load.  This
+    argument only has an effect the first time init() is called in a process.
+    If this argument is None, an installed copy of the library is expected to
+    be found.
+
     """
     assert isinstance(buf, bytes)
+
+    global libopenspc
+    if libopenspc is None:
+        libopenspc = ctypes.cdll.LoadLibrary(
+            libpath if libpath is not None else 'libopenspc.so.0')
+
     ret = libopenspc.OSPC_Init(ctypes.c_char_p(buf), ctypes.c_ulong(len(buf)))
     if ret > 0:
         raise ValueError('Unable to recognize supplied file format')

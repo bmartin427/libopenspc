@@ -38,13 +38,9 @@ import signal
 import subprocess
 import sys
 
-try:
-    import openspc
-except ImportError:
-    # Fixup path if we're not installed to run from the build directory.
-    sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                 'libopenspc'))
-    import openspc
+# This will only work if `ninja install` has been run.  It will not find the
+# module directly from the source directory.
+import openspc
 
 _BUFS_PER_SEC = 13
 _BUF_SAMPLES = openspc.SAMPLE_FREQ // _BUFS_PER_SEC

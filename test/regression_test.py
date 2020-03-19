@@ -34,9 +34,10 @@ import argparse
 import lzma
 import hashlib
 import os.path
+import pathlib
 import sys
 
-# This script is intended to be run on the build directory and not on an
+# This script is intended to be run on the source directory and not on an
 # installed copy.
 this_dir = os.path.dirname(__file__)
 sys.path.append(os.path.join(os.path.dirname(this_dir), 'libopenspc'))
@@ -89,11 +90,14 @@ def _select_tests(test_str):
     return [(i, TESTS[i]) for i in sorted(test_nos)]
 
 
-def run_test(name, output_dir):
-    with lzma.open(os.path.join(this_dir, 'data',
-                                name + '.spc.xz')) as spcfile:
+def _data_filename(name):
+    return os.path.join(this_dir, 'data', name + '.spc.xz')
+
+
+def run_test(name, output_dir, libpath):
+    with lzma.open(_data_filename(name)) as spcfile:
         spc_content = spcfile.read()
-    openspc.init(spc_content)
+    openspc.init(spc_content, libpath=libpath)
 
     out_file = None
     if output_dir is not None:
@@ -128,17 +132,38 @@ def main():
     parser.add_argument(
         '-v', '--verbose', default=False, action='store_true',
         help='Print detailed test results')
+    parser.add_argument(
+        '--libpath',
+        help='Optionally specify path to libopenspc.so library to use')
+    parser.add_argument(
+        '--passed-file',
+        help='On success, touch a file with this filename')
+    parser.add_argument(
+        '--depfile',
+        help=('Write a list of all data files used by this test suite in '
+              'Make format to the given filename; requires --passed-file'))
     args = parser.parse_args()
+    selected_tests = _select_tests(args.tests)
 
     if args.list:
-        for test_no, test in enumerate(TESTS):
-            print('%d: %s' % (test_no, test[0]))
+        for test_no, (name, _) in selected_tests:
+            print('%d: %s' % (test_no, name))
         return
 
+    if args.depfile:
+        if not args.passed_file:
+            parser.error('--depfile requires --passed-file')
+        with open(args.depfile, 'wt', encoding='utf8') as depfile:
+            print(
+                '%s: %s' %
+                (args.passed_file,
+                 ' '.join(_data_filename(n) for _, (n, _) in selected_tests)),
+                file=depfile)
+
     failed = False
-    for test_no, (name, expected_md5) in _select_tests(args.tests):
+    for test_no, (name, expected_md5) in selected_tests:
         # TODO(bmartin) Could run these in parallel with multiprocessing.
-        actual_md5 = run_test(name, args.output_dir)
+        actual_md5 = run_test(name, args.output_dir, args.libpath)
         ok = (actual_md5 == expected_md5)
         if args.verbose:
             print('%d (%s): %s' %
@@ -150,11 +175,16 @@ def main():
             print('*** FAILED test %d (%s)' % (test_no, name),
                   file=sys.stderr)
             failed = True
+    if args.verbose:
+        print()
 
     if failed:
-        print('\n*** SOME SPC REGRESSION TESTS FAILED ***', file=sys.stderr)
+        print('*** SOME SPC REGRESSION TESTS FAILED ***', file=sys.stderr)
         sys.exit(1)
-    print('\nALL SPC REGRESSION TESTS PASSED')
+
+    print('ALL SPC REGRESSION TESTS PASSED')
+    if args.passed_file:
+        pathlib.Path(args.passed_file).touch(exist_ok=True)
 
 
 if __name__ == '__main__':
