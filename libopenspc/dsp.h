@@ -1,6 +1,6 @@
 /************************************************************************
 
-        Copyright (c) 2003-2014 Brad Martin.
+        Copyright (c) 2003-2020 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -30,6 +30,10 @@ to change.
 
 #if !defined _DSP_H
 #define _DSP_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*========== TYPES ==========*/
 
@@ -110,5 +114,9 @@ void DSP_Update                     /* Mix one sample of audio      */
     (
     short *             sound_ptr   /* Pointer to mix audio into    */
     );
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #endif  /* _DSP_H */

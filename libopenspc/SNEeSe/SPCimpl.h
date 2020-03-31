@@ -1,6 +1,6 @@
 /**************************************************************************
 
-        Copyright (c) 2003-2005 Brad Martin.
+        Copyright (c) 2003-2020 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -19,6 +19,10 @@ its license.  See the file 'LICENSE' in this directory for more information.
 /*========== INCLUDES ==========*/
 
 #include "sneese_spc.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*========== DEFINES ==========*/
 
@@ -59,5 +63,9 @@ void SPC_SetState
     int                 sp,
     void *              ram
     );
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #endif /* _SPCIMPL_H */

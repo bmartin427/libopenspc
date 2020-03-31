@@ -1,6 +1,6 @@
 /************************************************************************
 
-        Copyright (c) 2003-2014 Brad Martin.
+        Copyright (c) 2003-2020 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
 
-main.c: implements functions intended for external use of the libopenspc
+main.cc: implements functions intended for external use of the libopenspc
 library.
 
  ************************************************************************/
@@ -120,7 +120,7 @@ static int Load_ZST(void *buf,size_t size)
 
 static int GZ_Read(void *buf,size_t size,z_streamp zsp)
 {
-    zsp->next_out=buf;
+    zsp->next_out=reinterpret_cast<Bytef*>(buf);
     zsp->avail_out=size;
     return inflate(zsp,Z_SYNC_FLUSH);
 }
@@ -152,7 +152,7 @@ static z_streamp GZ_Open(unsigned char *buf,size_t size)
         skip+=2;
     if(skip>=size)
         return NULL;
-    zsp=malloc(sizeof(z_stream));
+    zsp=reinterpret_cast<z_streamp>(malloc(sizeof(z_stream)));
     zsp->next_in=buf+skip;
     zsp->avail_in=size-skip;
     zsp->zalloc=Z_NULL;
@@ -192,8 +192,9 @@ static int Load_S9X(void *buf,size_t size)
     } SnapAPURegisters;
     const char ident[]="#!snes9";
     const int bufsize=65536;
-    char *obuf=malloc(bufsize),*RAM=malloc(65536);
-    z_streamp zsp=GZ_Open(buf,size);
+    char *obuf=reinterpret_cast<char*>(malloc(bufsize)),
+      *RAM=reinterpret_cast<char*>(malloc(65536));
+    z_streamp zsp=GZ_Open(reinterpret_cast<unsigned char*>(buf),size);
     int i,blen,foundRAM=0,foundRegs=0;
 
     if(zsp==NULL)
@@ -284,7 +285,7 @@ static int Load_S9X(void *buf,size_t size)
 
 /**** Exported library interfaces ****/
 
-int OSPC_Init(void *buf, size_t size)
+extern "C" int OSPC_Init(void *buf, size_t size)
 {
     int ret;
 #ifndef NO_CLEAR_ECHO
@@ -322,7 +323,7 @@ int OSPC_Init(void *buf, size_t size)
     return ret;
 }
 
-int OSPC_Run(int cyc, short *s_buf, int s_size)
+extern "C" int OSPC_Run(int cyc, short *s_buf, int s_size)
 {
     int i,buf_inc=s_buf?2:0;
 
@@ -367,50 +368,50 @@ int OSPC_Run(int cyc, short *s_buf, int s_size)
     return i;
 }
 
-void OSPC_WritePort0(char data)
+extern "C" void OSPC_WritePort0(char data)
 {
     WritePort0(data);
 }
 
-void OSPC_WritePort1(char data)
+extern "C" void OSPC_WritePort1(char data)
 {
     WritePort1(data);
 }
 
-void OSPC_WritePort2(char data)
+extern "C" void OSPC_WritePort2(char data)
 {
     WritePort2(data);
 }
 
-void OSPC_WritePort3(char data)
+extern "C" void OSPC_WritePort3(char data)
 {
     WritePort3(data);
 }
 
-char OSPC_ReadPort0(void)
+extern "C" char OSPC_ReadPort0(void)
 {
     return ReadPort0();
 }
 
-char OSPC_ReadPort1(void)
+extern "C" char OSPC_ReadPort1(void)
 {
     return ReadPort1();
 }
 
-char OSPC_ReadPort2(void)
+extern "C" char OSPC_ReadPort2(void)
 {
     return ReadPort2();
 }
 
-char OSPC_ReadPort3(void)
+extern "C" char OSPC_ReadPort3(void)
 {
     return ReadPort3();
 }
 
-void OSPC_SetChannelMask(int mask) {
+extern "C" void OSPC_SetChannelMask(int mask) {
   channel_mask = mask;
 }
 
-int OSPC_GetChannelMask(void) {
+extern "C" int OSPC_GetChannelMask(void) {
   return channel_mask;
 }

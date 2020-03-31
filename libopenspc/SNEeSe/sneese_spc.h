@@ -1,6 +1,6 @@
 /**************************************************************************
 
-        Copyright (c) 2005 Brad Martin.
+        Copyright (c) 2005-2020 Brad Martin.
         Some portions copyright (c) 1998-2005 Charles Bilyue'.
 
 This file is part of OpenSPC.
@@ -16,6 +16,10 @@ the file 'LICENSE' in this directory for more information.
 
 #if !defined( _SNEESE_SPC_H )
 #define _SNEESE_SPC_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*========== DEFINES ==========*/
 
@@ -52,14 +56,14 @@ typedef struct
     unsigned char       data2;
     unsigned char       opcode;
     unsigned char       offset;
-    
+
     word_2b             PC;
     word_2b             YA;
     word_2b             address;
     word_2b             address2;
     word_2b             data16;
     word_2b             direct_page;
-    
+
     unsigned            Cycles;
     void *              FFC0_Address;
     unsigned            TotalCycles;
@@ -140,5 +144,9 @@ unsigned char get_SPC_PSW
 
 void spc_restore_flags
     ( void );
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #endif

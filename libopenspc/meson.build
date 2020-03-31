@@ -26,7 +26,7 @@ subdir('SNEeSe')  # defines libspcimpl
 
 libopenspc_lib = shared_library(
     'openspc',
-    ['dsp.c', 'main.c'],
+    ['dsp.c', 'main.cc'],
     c_args: ['-Wno-array-bounds'],
     dependencies: [libspcimpl,
                    dependency('zlib', version: '>=1.2.0')],

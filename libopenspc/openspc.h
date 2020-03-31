@@ -1,6 +1,6 @@
 /************************************************************************
 
-        Copyright (c) 2003-2014 Brad Martin.
+        Copyright (c) 2003-2020 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -28,6 +28,10 @@ This file contains the exported interface for libopenspc.
 #include <stdlib.h>
 
 #define OPENSPC_VERSION "snap-20030109"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int OSPC_Init(void *buf, size_t size);
 /* This method is used to load a new state into the emulator.  buf points to
@@ -78,5 +82,9 @@ void OSPC_SetChannelMask(int mask);
 
 int OSPC_GetChannelMask(void);
 /* Used to retrieve the current channel mask value. */
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #endif /* #ifndef OPENSPC_H */
