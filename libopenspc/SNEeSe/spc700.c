@@ -4,7 +4,7 @@ SNEeSe, an Open Source Super NES emulator.
 
 
 Copyright (c) 1998-2005, Charles Bilyue'.
-Portions copyright (c) 1998-2003, Brad Martin.
+Portions copyright (c) 1998-2020, Brad Martin.
 Portions copyright (c) 2003-2004, Daniel Horchner.
 Portions copyright (c) 2004-2005, Nach. ( http://nsrt.edgeemu.com/ )
 Unzip Technology, copyright (c) 1998 Gilles Vollant.
@@ -22,6 +22,12 @@ You must read and accept the license prior to use.
 
 #define SNEeSe_apu_spc700_c
 
+// NOTE(bmartin) The content of this file should be a verbatim copy of the
+// similarly-named file in the SNEeSe source, with the single exception that
+// all of the includes have been removed and replaced with the following
+// statement.  The below referenced file needs to be specially crafted so this
+// file can find all of the symbols it normally expects to find elsewhere in
+// the SNEeSe tree.
 #include "sneese_spc.h"
 
 SPC700_CONTEXT primary_context;
@@ -476,7 +482,7 @@ static unsigned char SPC_READ_COUNTER(unsigned short address)
 {
   /* 0xFD = read address for first timer's counter */
   int timer = address - 0xFD;
-  unsigned char counter; 
+  unsigned char counter;
 
   Update_SPC_Timer(timer);
   counter = _timers[timer].counter;
@@ -1703,7 +1709,7 @@ static void Execute_SPC(void)
   In_CPU = 0;
 
   load_cycles_spc();
-  
+
   while (_WorkCycles < 0)
   {
     int opcode_done = 1;

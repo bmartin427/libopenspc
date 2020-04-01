@@ -25,13 +25,18 @@ library.
 
  ************************************************************************/
 
+#include "openspc.h"
+
 #include <cstdint>
 #include <cstring>
 #include <memory>
 
-#include "SPCimpl.h"
 #include "dsp.h"
-#include "openspc.h"
+#include "spc_cpu.h"
+
+// TODO(bmartin) This is temporary until dsp.h gets overhauled.
+#define DSPregs SPC_DSP
+extern unsigned char SPC_DSP[256];
 
 namespace {
 
@@ -43,7 +48,6 @@ class SpcContext {
  public:
   SpcContext() {
     channel_mask = 0;
-    SPC_Reset();
     DSP_Reset();
   }
 
@@ -72,7 +76,7 @@ class SpcContext {
         // TODO(bmartin) Does this wrap around?  Do we need to clear at the
         // beginning of memory too?
       }
-      std::memset(&SPC_RAM[start], 0, len);
+      std::memset(&spc_cpu_.ram()[start], 0, len);
     }
 
     return success;
@@ -100,11 +104,11 @@ class SpcContext {
       // Buffer size is the limiting factor.
       buf_size &= ~(kBytesPerSample - 1);
       if (mix_left_) {
-        SPC_Run(mix_left_);
+        spc_cpu_.Run(mix_left_);
       }
       for (size_t i = 0; i < buf_size; i += kBytesPerSample, buf += buf_inc) {
         DSP_Update(buf);
-        SPC_Run(TS_CYC);
+        spc_cpu_.Run(TS_CYC);
       }
       mix_left_ = 0;
       return buf_size;
@@ -112,29 +116,37 @@ class SpcContext {
 
     // Otherwise, use the cycle limit.
     if (cycle_limit < mix_left_) {
-      SPC_Run(cycle_limit);
+      spc_cpu_.Run(cycle_limit);
       mix_left_ -= cycle_limit;
       return 0;
     }
     if (mix_left_) {
-      SPC_Run(mix_left_);
+      spc_cpu_.Run(mix_left_);
       cycle_limit -= mix_left_;
     }
     int samples_written = 0;
     for (; cycle_limit >= TS_CYC; cycle_limit -= TS_CYC) {
       DSP_Update(buf);
-      SPC_Run(TS_CYC);
+      spc_cpu_.Run(TS_CYC);
       ++samples_written;
       buf += buf_inc;
     }
     if (cycle_limit) {
       DSP_Update(buf);
-      SPC_Run(cycle_limit);
+      spc_cpu_.Run(cycle_limit);
       mix_left_ = TS_CYC - cycle_limit;
       ++samples_written;
     }
     return kBytesPerSample * samples_written;
   }
+
+  /// Perform a write to one of the SPC-CPU's four incoming communication
+  /// ports, as if the SNES-CPU had written to the SPC.
+  void WritePort(int index, uint8_t data) { spc_cpu_.WritePort(index, data); }
+
+  /// Perform a read from one of the SPC-CPU's four outgoing communication
+  /// ports, as if the SNES-CPU had read from the SPC.
+  uint8_t ReadPort(int index) { return spc_cpu_.ReadPort(index); }
 
  private:
   /// Loads .spc file content into the simulation.
@@ -166,9 +178,9 @@ class SpcContext {
         (std::memcmp(buf, kIdentStr, sizeof(kIdentStr) - 1) != 0)) {
       return false;
     }
-    SPC_SetState(buf[kPcOffset] + (buf[kPcOffset + 1] << 8), buf[kAOffset],
-                 buf[kXOffset], buf[kYOffset], buf[kPSWOffset],
-                 0x100 + buf[kSPOffset], &buf[kRamOffset]);
+    spc_cpu_.SetState(buf[kPcOffset] + (buf[kPcOffset + 1] << 8), buf[kAOffset],
+                      buf[kXOffset], buf[kYOffset], buf[kPSWOffset],
+                      0x100 + buf[kSPOffset], &buf[kRamOffset]);
     std::memcpy(DSPregs, &buf[kDspOffset], kDspLen);
 
     return true;
@@ -221,12 +233,9 @@ class SpcContext {
       psw &= ~kNegFlag;
     }
 
-    SPC_SetState(buf[kPcOffset] + (buf[kPcOffset + 1] << 8), buf[kAOffset],
-                 buf[kXOffset], buf[kYOffset], psw, 0x100 + buf[kSPOffset],
-                 &buf[kRamOffset]);
-    // TODO(bmartin) This copies 256 bytes, while the .spc path only copies
-    // 128.  Do the other bytes even actually exist in a H/W DSP?  If not, we
-    // shouldn't assume any given SPCimpl will declare DSPregs to that length.
+    spc_cpu_.SetState(buf[kPcOffset] + (buf[kPcOffset + 1] << 8), buf[kAOffset],
+                      buf[kXOffset], buf[kYOffset], psw, 0x100 + buf[kSPOffset],
+                      &buf[kRamOffset]);
     std::memcpy(DSPregs, &buf[kDspOffset], kDspLen);
     // This is a hack to turn on voices that were already on when the state
     // was saved.  This doesn't restore the entire state of the voice, it just
@@ -239,6 +248,7 @@ class SpcContext {
     return true;
   }
 
+  openspc::SpcCpu spc_cpu_;
   // Number of SPC CPU cycles remaining until the next DSP sample is due, for
   // use in between calls to Run().
   int mix_left_ = 0;
@@ -261,22 +271,26 @@ extern "C" int OSPC_Run(int cyc, short *s_buf, int s_size) {
   return g_spc_context->Run(cyc, s_buf, s_size);
 }
 
-extern "C" void OSPC_WritePort0(char data) { WritePort0(data); }
+extern "C" void OSPC_WritePort0(char data) {
+  g_spc_context->WritePort(0, data);
+}
 
-extern "C" void OSPC_WritePort1(char data) { WritePort1(data); }
+extern "C" void OSPC_WritePort1(char data) {
+  g_spc_context->WritePort(1, data);
+}
 
-extern "C" void OSPC_WritePort2(char data) { WritePort2(data); }
+extern "C" void OSPC_WritePort2(char data) {
+  g_spc_context->WritePort(2, data);
+}
 
-extern "C" void OSPC_WritePort3(char data) { WritePort3(data); }
+extern "C" void OSPC_WritePort3(char data) {
+  g_spc_context->WritePort(3, data);
+}
 
-extern "C" char OSPC_ReadPort0(void) { return ReadPort0(); }
-
-extern "C" char OSPC_ReadPort1(void) { return ReadPort1(); }
-
-extern "C" char OSPC_ReadPort2(void) { return ReadPort2(); }
-
-extern "C" char OSPC_ReadPort3(void) { return ReadPort3(); }
+extern "C" char OSPC_ReadPort0(void) { return g_spc_context->ReadPort(0); }
+extern "C" char OSPC_ReadPort1(void) { return g_spc_context->ReadPort(1); }
+extern "C" char OSPC_ReadPort2(void) { return g_spc_context->ReadPort(2); }
+extern "C" char OSPC_ReadPort3(void) { return g_spc_context->ReadPort(3); }
 
 extern "C" void OSPC_SetChannelMask(int mask) { channel_mask = mask; }
-
 extern "C" int OSPC_GetChannelMask(void) { return channel_mask; }
