@@ -16,12 +16,13 @@ its license.  See the file 'LICENSE' in this directory for more information.
 
 /*========== INCLUDES ==========*/
 
+#include "sneese_spc.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "dsp.h"
-#include "SPCimpl.h"
 
 #undef NO_ENVX
 #undef CLEAR_PORTS
@@ -143,78 +144,6 @@ unsigned char           SPCRAM[ 65536 ];
 unsigned                sound_cycle_latch;
 
 /*========== PROCEDURES ==========*/
-
-
-/***** SPC_SetState *****/
-
-void SPC_SetState
-    (
-    int                 pc,
-    int                 a,
-    int                 x,
-    int                 y,
-    int                 p,
-    int                 sp,
-    const void *        ram
-    )
-{
-/* Initialize SPC memory.  Also initialize the state of the 0xFFC0 ROM being
-   switched in/out. */
-memcpy( SPCRAM, ram, 65536 );
-if( 0 == ( SPC_CTRL & 0x80 ) )
-    {
-    active_context->FFC0_Address = SPCRAM;
-    }
-
-/* Initialize SPC timers to the values the saved RAM indicates were active */
-active_context->timers[ 0 ].target
-    = ( unsigned char )( SPCRAM[ 0xFA ] - 1 ) + 1;
-active_context->timers[ 1 ].target
-    = ( unsigned char )( SPCRAM[ 0xFB ] - 1 ) + 1;
-active_context->timers[ 2 ].target
-    = ( unsigned char )( SPCRAM[ 0xFC ] - 1 ) + 1;
-active_context->timers[ 0 ].counter = SPCRAM[ 0xFD ] & 0xF;
-active_context->timers[ 1 ].counter = SPCRAM[ 0xFE ] & 0xF;
-active_context->timers[ 2 ].counter = SPCRAM[ 0xFF ] & 0xF;
-
-/* Initialize SPC <-> CPU communications registers to the values the saved RAM
-   indicates were active */
-active_context->PORT_R[ 0 ] = SPCRAM[ 0xF4 ];
-active_context->PORT_R[ 1 ] = SPCRAM[ 0xF5 ];
-active_context->PORT_R[ 2 ] = SPCRAM[ 0xF6 ];
-active_context->PORT_R[ 3 ] = SPCRAM[ 0xF7 ];
-
-/* Initialize SPC registers and associated values */
-active_context->PC.w   = pc;
-active_context->YA.b.l = a;
-active_context->X      = x;
-active_context->YA.b.h = y;
-active_context->SP     = sp;
-
-/* Now we have to set up the PSW.  Fortunately, SNEeSe now has a function to
-   set its internal state up for us. */
-active_context->PSW = p;
-spc_restore_flags();
-
-#ifdef CLEAR_PORTS
-/* Hack: if any of the control port 'port clear' bits are set, carry out that
-   clear now.  Not sure how they would get set and not have already been
-   cleared, but I'm hoping this will fix an issue I'm seeing with an SPC file
-   that apparently does have it set.
-   Update: breaks Actraiser, so hack reverted */
-if( SPC_CTRL & 0x10 )
-    {
-    active_context->PORT_R[ 0 ] = 0;
-    active_context->PORT_R[ 1 ] = 0;
-    }
-if( SPC_CTRL & 0x20 )
-    {
-    active_context->PORT_R[ 2 ] = 0;
-    active_context->PORT_R[ 3 ] = 0;
-    }
-#endif
-
-}   /* SPC_SetState() */
 
 
 /* These are to be called from SNEeSe SPC core only, not from the rest of the

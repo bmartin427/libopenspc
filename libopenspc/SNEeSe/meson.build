@@ -22,7 +22,7 @@
 
 libspcimpl_lib = static_library(
     'spcimpl',
-    ['SPCimpl.c', 'spc700.c'],
+    ['sneese_spc.c', 'spc700.c', 'spc_cpu.cc'],
     # SNEeSe has some warnings I don't intend to resolve.
     c_args: ['-Wno-array-bounds',
              '-Wno-implicit-fallthrough',

@@ -87,6 +87,10 @@ extern int          keys;           /* 1 -> channel audible         */
 extern voice_state_type
                     voice_state[ 8 ];
 
+// TODO(bmartin) Temporary hacks pending larger rewrite
+#define DSPregs SPC_DSP
+extern unsigned char SPC_DSP[256];
+
 /*========== MACROS ==========*/
 
 /* The functions to actually read and write to the DSP registers must be

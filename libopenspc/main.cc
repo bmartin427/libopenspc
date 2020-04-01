@@ -34,10 +34,6 @@ library.
 #include "dsp.h"
 #include "spc_cpu.h"
 
-// TODO(bmartin) This is temporary until dsp.h gets overhauled.
-#define DSPregs SPC_DSP
-extern unsigned char SPC_DSP[256];
-
 namespace {
 
 /// Class to maintain the context for one SPC simulation.

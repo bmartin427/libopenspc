@@ -32,10 +32,13 @@ namespace openspc {
 // only one copy of this class may exist in a process.  Fix this eventually.
 class SpcCpu {
  public:
-  SpcCpu();
+  static constexpr int kRamSize = 65536;
 
-  /// Initialize the CPU to the given state.  @p ram should point to 64kB of
-  /// data.
+  SpcCpu();
+  ~SpcCpu();
+
+  /// Initialize the CPU to the given state.  @p ram should point to kRamSize
+  /// bytes of data.
   void SetState(uint16_t pc, uint8_t a, uint8_t x, uint8_t y, uint8_t psw,
                 uint8_t sp, const uint8_t* ram);
 
@@ -50,6 +53,10 @@ class SpcCpu {
 
   /// Read from one of the CPU's four outgoing communication ports.
   uint8_t ReadPort(int index);
+
+ private:
+  class Impl;
+  std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace openspc

@@ -1,6 +1,6 @@
 /************************************************************************
 
-        Copyright (c) 2003-2014 Brad Martin.
+        Copyright (c) 2003-2020 Brad Martin.
 
 This file is part of OpenSPC.
 
@@ -32,7 +32,6 @@ specific implementations and prototypes are subject to change.
 #include <math.h>
 #include <stdio.h>
 
-#include "SPCimpl.h"
 #include "dsp.h"
 #include "gauss.h"
 
@@ -51,6 +50,10 @@ specific implementations and prototypes are subject to change.
 
 #define CPU_RATE        ( 1024000 )
 #define SAMP_FREQ       ( 32000 )
+
+// TODO(bmartin) Temporary hacks pending larger rewrite
+#define SPC_RAM SPCRAM
+extern unsigned char SPCRAM[65536];
 
 /*========== VARIABLES ==========*/
 

@@ -9,9 +9,9 @@ SNEeSe version 0.841 and modified for use with OpenSPC:
 These files were independently created but contain some code derived from
 SNEeSe:
 
-* SPCimpl.c
-* SPCimpl.h
 * sneese_spc.h
+* sneese_spc.c
+* spc_cpu.cc
 
 For details on the SNEeSe license, read the file 'LICENSE' found in this
 directory.  The original SNEeSe package and documentation may be found at
