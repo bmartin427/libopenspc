@@ -61,7 +61,7 @@ void SPC_SetState
     int                 y,
     int                 p,
     int                 sp,
-    void *              ram
+    const void *        ram
     );
 
 #ifdef __cplusplus

@@ -28,8 +28,7 @@ libopenspc_lib = shared_library(
     'openspc',
     ['dsp.c', 'main.cc'],
     c_args: ['-Wno-array-bounds'],
-    dependencies: [libspcimpl,
-                   dependency('zlib', version: '>=1.2.0')],
+    dependencies: [libspcimpl],
     install: true,
     version: meson.project_version())
 

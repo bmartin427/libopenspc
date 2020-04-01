@@ -1,6 +1,6 @@
 /**************************************************************************
 
-        Copyright (c) 2003-2005 Brad Martin.
+        Copyright (c) 2003-2020 Brad Martin.
         Some portions copyright (c) 1998-2005 Charles Bilyue'.
 
 This file is part of OpenSPC.
@@ -155,7 +155,7 @@ void SPC_SetState
     int                 y,
     int                 p,
     int                 sp,
-    void *              ram
+    const void *        ram
     )
 {
 /* Initialize SPC memory.  Also initialize the state of the 0xFFC0 ROM being
@@ -171,7 +171,7 @@ active_context->timers[ 0 ].target
     = ( unsigned char )( SPCRAM[ 0xFA ] - 1 ) + 1;
 active_context->timers[ 1 ].target
     = ( unsigned char )( SPCRAM[ 0xFB ] - 1 ) + 1;
-active_context->timers[ 2 ].target 
+active_context->timers[ 2 ].target
     = ( unsigned char )( SPCRAM[ 0xFC ] - 1 ) + 1;
 active_context->timers[ 0 ].counter = SPCRAM[ 0xFD ] & 0xF;
 active_context->timers[ 1 ].counter = SPCRAM[ 0xFE ] & 0xF;
