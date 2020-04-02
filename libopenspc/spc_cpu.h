@@ -33,8 +33,11 @@ namespace openspc {
 class SpcCpu {
  public:
   static constexpr int kRamSize = 65536;
+  static constexpr int kDspRegsSize = 256;
 
-  SpcCpu();
+  /// @p dsp_regs is a pointer to external storage for DSP register contents.
+  /// It must be at least kDspRegsSize.
+  explicit SpcCpu(uint8_t* dsp_regs);
   ~SpcCpu();
 
   /// Initialize the CPU to the given state.  @p ram should point to kRamSize
@@ -45,7 +48,8 @@ class SpcCpu {
   /// Run the CPU for the given number of cycles.
   void Run(int);
 
-  /// Retrieve a mutable pointer to the memory space of the CPU.
+  /// Retrieve a mutable pointer to the memory space of the CPU, which is of
+  /// size kRamSize.
   uint8_t* ram();
 
   /// Write to one of the CPU's four incoming communication ports.

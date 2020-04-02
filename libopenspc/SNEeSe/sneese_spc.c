@@ -131,17 +131,10 @@ static const char *     SPC_OpID[ 256 ]
 
 /*========== VARIABLES ==========*/
 
-unsigned char           In_CPU;
-unsigned                Map_Address;
-unsigned                Map_Byte;
-unsigned                SPC_CPU_cycle_divisor;
-unsigned                SPC_CPU_cycle_multiplicand;
-unsigned                SPC_CPU_cycles;
-unsigned                SPC_CPU_cycles_mul;
-unsigned char           SPC_DSP[ 256 ];
-unsigned                SPC_DSP_DATA;
-unsigned char           SPCRAM[ 65536 ];
-unsigned                sound_cycle_latch;
+uint8_t In_CPU;
+uint8_t SPC_CPU_cycles;
+uint8_t SPC_CPU_cycles_mul;
+uint8_t sound_cycle_latch;
 
 /*========== PROCEDURES ==========*/
 

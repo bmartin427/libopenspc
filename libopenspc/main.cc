@@ -42,7 +42,7 @@ namespace {
 // Eventually this should change.
 class SpcContext {
  public:
-  SpcContext() {
+  SpcContext() : spc_cpu_(DSPregs) {
     channel_mask = 0;
     DSP_Reset();
   }

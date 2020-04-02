@@ -24,11 +24,11 @@ namespace openspc {
 
 class SpcCpu::Impl {
  public:
-  Impl() {
+  explicit Impl(uint8_t* dsp_regs) {
+    // Ensure context is in a defined state.
+    std::memset(active_context, 0, sizeof(SPC700_CONTEXT));
+    active_context->dsp_regs = dsp_regs;
     Reset_SPC();
-    SPC_CPU_cycle_multiplicand = 1;
-    SPC_CPU_cycle_divisor = 1;
-    SPC_CPU_cycles_mul = 0;
   }
 
   void SetState(uint16_t pc, uint8_t a, uint8_t x, uint8_t y, uint8_t psw,
@@ -77,7 +77,7 @@ class SpcCpu::Impl {
   // on dsp.c dependency on the context being set currently.)
 };
 
-SpcCpu::SpcCpu() : impl_(std::make_unique<Impl>()) {}
+SpcCpu::SpcCpu(uint8_t* dsp_regs) : impl_(std::make_unique<Impl>(dsp_regs)) {}
 SpcCpu::~SpcCpu() {}
 
 void SpcCpu::SetState(uint16_t pc, uint8_t a, uint8_t x, uint8_t y, uint8_t psw,

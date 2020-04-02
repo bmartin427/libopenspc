@@ -34,6 +34,8 @@ specific implementations and prototypes are subject to change.
 
 #include "dsp.h"
 #include "gauss.h"
+// TODO(bmartin) Temporary hack pending rewrite
+#include "SNEeSe/sneese_spc.h"
 
 /*========== DEFINES ==========*/
 
@@ -50,10 +52,7 @@ specific implementations and prototypes are subject to change.
 
 #define CPU_RATE        ( 1024000 )
 #define SAMP_FREQ       ( 32000 )
-
-// TODO(bmartin) Temporary hacks pending larger rewrite
 #define SPC_RAM SPCRAM
-extern unsigned char SPCRAM[65536];
 
 /*========== VARIABLES ==========*/
 
@@ -73,6 +72,8 @@ static short            FIRrbuf[ 8 ];
 static int              FIRptr;
 static int              echo_ptr;
 #endif
+
+uint8_t DSPregs[256];
 
 /*========== CONSTANTS ==========*/
 

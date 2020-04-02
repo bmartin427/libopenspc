@@ -31,6 +31,8 @@ to change.
 #if !defined _DSP_H
 #define _DSP_H
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -87,9 +89,7 @@ extern int          keys;           /* 1 -> channel audible         */
 extern voice_state_type
                     voice_state[ 8 ];
 
-// TODO(bmartin) Temporary hacks pending larger rewrite
-#define DSPregs SPC_DSP
-extern unsigned char SPC_DSP[256];
+extern uint8_t DSPregs[256];
 
 /*========== MACROS ==========*/
 
