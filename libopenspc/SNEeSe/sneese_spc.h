@@ -22,6 +22,8 @@ the file 'LICENSE' in this directory for more information.
 extern "C" {
 #endif
 
+// These defines are copied directly from the SNEeSe source.
+#define BIT(bit) (1 << (bit))
 #define SPC_CTRL (SPCRAM[0xF1])
 #define SPC_DSP_ADDR (SPCRAM[0xF2])
 

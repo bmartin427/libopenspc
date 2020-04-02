@@ -3,7 +3,7 @@
 SNEeSe, an Open Source Super NES emulator.
 
 
-Copyright (c) 1998-2005, Charles Bilyue'.
+Copyright (c) 1998-2006, Charles Bilyue'.
 Portions copyright (c) 1998-2020, Brad Martin.
 Portions copyright (c) 2003-2004, Daniel Horchner.
 Portions copyright (c) 2004-2005, Nach. ( http://nsrt.edgeemu.com/ )
@@ -430,7 +430,8 @@ static unsigned char SPC_READ_DSP_DATA(unsigned short address)
   SPC_READ_DSP();
 
   /* read from DSP register */
-  return SPC_DSP[SPC_DSP_ADDR];
+  /* DSP address bit 7 ignored during reads only! */
+  return SPC_DSP[SPC_DSP_ADDR & 0x7F];
 }
 
 
@@ -456,13 +457,13 @@ void Update_SPC_Timer(int timer)
   {
     shift = 4;
   }
-  mask = -(1 << shift);
+  mask = -BIT(shift);
 
   cycles = _TotalCycles - _timers[timer].cycle_latch;
   _timers[timer].cycle_latch += cycles & mask;
 
   /* nothing to do if timer turned off */
-  if (!(SPC_CTRL & (1 << timer))) return;
+  if (!(SPC_CTRL & BIT(timer))) return;
 
   position = _timers[timer].position + (cycles >> shift);
   _timers[timer].position = position;
@@ -482,7 +483,7 @@ static unsigned char SPC_READ_COUNTER(unsigned short address)
 {
   /* 0xFD = read address for first timer's counter */
   int timer = address - 0xFD;
-  unsigned char counter;
+  unsigned char counter; 
 
   Update_SPC_Timer(timer);
   counter = _timers[timer].counter;
@@ -515,7 +516,7 @@ void spc_start_timer(int timer)
   {
     shift = 4;
   }
-  mask = -(1 << shift);
+  mask = -BIT(shift);
 
   _timers[timer].cycle_latch = _TotalCycles & mask;
   _timers[timer].position = 0;
@@ -719,18 +720,9 @@ void set_byte_spc(unsigned short address, unsigned char data)
   }
 }
 
-//#define OPCODE_TRACE_LOG
-#ifdef OPCODE_TRACE_LOG
-FILE *log_file = 0;
-#endif
-
 void Reset_SPC(void)
 {
   int i;
-
-#ifdef OPCODE_TRACE_LOG
-  if (!log_file) log_file = fopen("h:\\spc.log", "wb");
-#endif
 
   /* Get ROM reset vector and setup Program Counter */
   _PC = SPC_ROM_CODE[0xFFFE - 0xFFC0] +
@@ -805,8 +797,6 @@ unsigned char get_SPC_PSW(void)
 }
 
 #ifdef OPCODE_TRACE_LOG
-static int dump_flag = 1;
-
 #define SS_WAIT_FOR_KEY /*if ((readkey() & 0xFF) == 'g') { int i = 0; while (i++ < 49) simulate_keypress(' ' + (KEY_SPACE << 8)); }*/
 
 #else
@@ -823,24 +813,24 @@ void dummy_fprintf()
 #ifdef OPCODE_TRACE_LOG
 /* cycle #, PC, TotalCycles */
 #define SINGLE_STEP_START(c) \
-  if (dump_flag) fprintf(log_file, "START_CYCLE(%u) PC:%04X %u\n",  c, _PC & 0xFFFF, get_cycles_spc());
+  if (dump_flag && debug_log_file){ fprintf(debug_log_file, "START_CYCLE(%u) PC:%04X %u\n", c, _PC & 0xFFFF, get_cycles_spc()); if ((c == 1) && (_PC == 0x02C4)) exit(0); }
 
 void single_step_end(void)
 {
-  if (!dump_flag) return;
-  fprintf(log_file, "R:%02X %02X %02X %02X W:%02X %02X %02X %02X X:%02X Y:%02X A:%02X SP:%02X dp:%02X Op:%02X\n",
+  if (!dump_flag || !debug_log_file) return;
+  fprintf(debug_log_file, "NVPBHIZC R:%02X %02X %02X %02X X:%02X Y:%02X A:%02X SP:%02X dp:%02X Op:%02X\n",
     _PORT0R & 0xFF, _PORT1R & 0xFF, _PORT2R & 0xFF, _PORT3R & 0xFF,
-    _PORT0W & 0xFF, _PORT1W & 0xFF, _PORT2W & 0xFF, _PORT3W & 0xFF,
     _X & 0xFF, _Y & 0xFF, _A & 0xFF, _SP & 0xFF, _direct_page & 0xFF, _opcode & 0xFF);
-  fprintf(log_file, "Ad%04X %04X Off%02X D%02X %02X D16 %04X NVPBHIZC %c%c%c%c%c%c%c%c",
-    _address & 0xFFFF, _address2 & 0xFFFF, _offset & 0xFF, _data & 0xFF, _data2 & 0xFF,
-    _data16 & 0xFFFF,
+  fprintf(debug_log_file, "%c%c%c%c%c%c%c%c W:%02X %02X %02X %02X Ad%04X %04X Off%02X D%02X %02X D16 %04X",
     flag_state_spc(SPC_FLAG_N) ? '1' : '0', flag_state_spc(SPC_FLAG_V) ? '1' : '0',
-    flag_state_spc(SPC_FLAG_P) ? '1' : '0', '1',
+    flag_state_spc(SPC_FLAG_P) ? '1' : '0', flag_state_spc(SPC_FLAG_B) ? '1' : '0',
     flag_state_spc(SPC_FLAG_H) ? '1' : '0', flag_state_spc(SPC_FLAG_I) ? '1' : '0',
-    flag_state_spc(SPC_FLAG_Z) ? '1' : '0', flag_state_spc(SPC_FLAG_C) ? '1' : '0');
- if (_cycle == 0) fprintf(log_file, " %s\n", SPC_OpID[_opcode]);
- else fprintf(log_file, "\n");
+    flag_state_spc(SPC_FLAG_Z) ? '1' : '0', flag_state_spc(SPC_FLAG_C) ? '1' : '0',
+    _PORT0W & 0xFF, _PORT1W & 0xFF, _PORT2W & 0xFF, _PORT3W & 0xFF,
+    _address & 0xFFFF, _address2 & 0xFFFF, _offset & 0xFF, _data & 0xFF, _data2 & 0xFF,
+    _data16 & 0xFFFF);
+ if (_cycle == 0) fprintf(debug_log_file, " %s\n", SPC_OpID[_opcode]);
+ else fprintf(debug_log_file, "\n");
 }
 
 
@@ -895,8 +885,8 @@ void single_step_end(void)
 #define REL_TEST_BEQ if (!flag_state_spc(SPC_FLAG_Z)) EXIT_OPCODE(1)
 
 #define OP_TCALL(vector) \
-  /*  8 cycles - opcode, new PCL, new PCH, stack address load, dummy */ \
-  /* cycle (PSW write in BRK?), PCH write, PCL write, */ \
+  /*  8 cycles - opcode, new PCL, new PCH, stack address load, PCH */ \
+  /* write, PCL write, dummy cycle (PSW write in BRK?) */ \
   /* SP decrement */ \
   /* fetch address for PC */ \
   START_CYCLE(2) \
@@ -913,22 +903,23 @@ void single_step_end(void)
   END_CYCLE(4, 1) \
  \
   START_CYCLE(5) \
-  /* should we write PSW to stack here? */ \
+  set_byte_spc(_address, _PC >> 8); \
+  _SP--; \
+  _address = 0x0100 + _SP; \
   END_CYCLE(5, 1) \
  \
   START_CYCLE(6) \
-  set_byte_spc(_address, _PC >> 8); \
+  set_byte_spc(_address, _PC); \
   _SP--; \
   _address = 0x0100 + _SP; \
   END_CYCLE(6, 1) \
  \
   START_CYCLE(7) \
-  set_byte_spc(_address, _PC); \
+  /* should we write PSW to stack here? */ \
   END_CYCLE(7, 1) \
  \
   START_CYCLE(8) \
   _PC = _address2; \
-  _SP--; \
   END_OPCODE(1)
 
 
@@ -1709,7 +1700,7 @@ static void Execute_SPC(void)
   In_CPU = 0;
 
   load_cycles_spc();
-
+  
   while (_WorkCycles < 0)
   {
     int opcode_done = 1;
@@ -2528,6 +2519,50 @@ static void Execute_SPC(void)
 
 
     /* xxx01111 */
+    case 0x0F:  /* BRK */
+      {
+        /*  8 cycles - opcode, new PCL, new PCH, stack address load, */
+        /* PSW write, PCH write, PCL write, SP decrement */
+        /* fetch address for PC */
+        START_CYCLE(2)
+        /* same vector as TCALL 0 */
+        _address = 0xFFC0 + ((15 - (0)) * 2);
+        _address2 = get_byte_spc(_address);
+        END_CYCLE(2, 1)
+
+        START_CYCLE(3)
+        _address2 += (get_byte_spc(_address + 1) << 8);
+        END_CYCLE(3, 1)
+
+        START_CYCLE(4)
+        _address = 0x0100 + _SP;
+        END_CYCLE(4, 1)
+
+        START_CYCLE(5)
+        set_byte_spc(_address, _PC >> 8);
+        _SP--;
+        _address = 0x0100 + _SP;
+        END_CYCLE(5, 1)
+
+        START_CYCLE(6)
+        set_byte_spc(_address, _PC);
+        _SP--;
+        _address = 0x0100 + _SP;
+        END_CYCLE(6, 1)
+
+        START_CYCLE(7)
+        spc_setup_flags(_B_flag);
+        set_byte_spc(_address, _PSW);
+        set_flag_spc(SPC_FLAG_B);
+        clr_flag_spc(SPC_FLAG_I);
+        END_CYCLE(7, 1)
+
+        START_CYCLE(8)
+        _PC = _address2;
+        _SP--;
+        END_OPCODE(1)
+      }
+
     case 0x2F:  /* BRA rel */
       {
         COND_REL(REL_TEST_BRA)
@@ -2565,7 +2600,7 @@ static void Execute_SPC(void)
 
     case 0x6F:  /* RET */
       {
-        /*  4 cycles - opcode, SP increment, address load, new PCL, new PCH */
+        /*  5 cycles - opcode, SP increment, address load, new PCL, new PCH */
         /* pop address to PC */
         START_CYCLE(2)
         _SP++;
@@ -3203,28 +3238,51 @@ static void Execute_SPC(void)
 
     case 0x9E:  /* DIV YA,X */
       {
-        unsigned temp = _YA;
-        int overflow = 0;
-
         /*  12 cycles - opcode, 11(op) */
-        /* timing and logic of operations completely wrong here */
+        /* timing of operations completely wrong here, at least */
         START_CYCLE(2)
-        if (_X == 0) overflow = 1;
-        else overflow = (temp / _X) > 0xFF;
-        if (overflow)
-        {
-          set_flag_spc(SPC_FLAG_N | SPC_FLAG_V);
-          clr_flag_spc(SPC_FLAG_Z);
-          _YA = 0xFFFF;
-        }
-        else
-        {
-          _Y = temp % _X;
-          _A = temp / _X;
-          clr_flag_spc(SPC_FLAG_V);
-          store_flags_nz(_A);
-        }
+          unsigned yva, work_x, i;
+          yva = _YA;
+          work_x = (unsigned) _X << 9;
+
+          if ((_X & 0xF) <= (_Y & 0xF)) set_flag_spc(SPC_FLAG_H);
+          else clr_flag_spc(SPC_FLAG_H);
+
+          for (i = 0; i < 9; i++)
+          {
+           yva <<= 1; if (yva & 0x20000) yva = (yva & 0x1FFFF) | 1;  /* 17-bit ROL */
+           if (yva >= work_x) yva ^= 1;  /* Why XOR i don't know, but it's what works */
+           /* and I guess this was easier than a compound if */
+           if (yva & 1) yva = (yva - work_x) & 0x1FFFF; /* enforce 17-bit register limit! */
+          }
+
+          if (yva & 0x100) set_flag_spc(SPC_FLAG_V);
+          else clr_flag_spc(SPC_FLAG_V);
+
+          _YA = (((yva >> 9) & 0xFF) << 8) + (yva & 0xFF);
+          store_flags_nz(_YA);
         END_OPCODE(11)
+      }
+
+    case 0xBE:  /* DAS */
+      {
+        /*  3 cycles - opcode, 2(op) */
+        START_CYCLE(2)
+        _data = _A;
+        if ((_data & 0x0F) > 9 || !flag_state_spc(SPC_FLAG_H))
+        {
+         _A -= 6;
+        }
+        END_CYCLE(2, 1)
+
+        START_CYCLE(3)
+        if (_data > 0x99 || !flag_state_spc(SPC_FLAG_C))
+        {
+         _A -= 0x60;
+         clr_flag_spc(SPC_FLAG_C);
+        }
+        store_flags_nz(_A);
+        END_OPCODE(1)
       }
 
     case 0xDE:  /* CBNE dp+X,rel */
@@ -3303,8 +3361,8 @@ static void Execute_SPC(void)
 
     case 0x3F:  /* CALL abs */
       {
-        /*  8 cycles - opcode, new PCL, new PCH, stack address load, dummy */
-        /* cycle (PSW write in BRK?), PCH write, PCL write, */
+        /*  8 cycles - opcode, new PCL, new PCH, stack address load, PCH */
+        /* write, PCL write, dummy cycle (PSW write in BRK?) */
         /* SP decrement */
         /* fetch address for PC */
         START_CYCLE(2)
@@ -3322,24 +3380,26 @@ static void Execute_SPC(void)
         END_CYCLE(4, 1)
 
         START_CYCLE(5)
-        /* should we write PSW to stack here? */
+        set_byte_spc(_address, _PC >> 8);
+        _SP--;
+        _address = 0x0100 + _SP;
         END_CYCLE(5, 1)
 
         START_CYCLE(6)
-        set_byte_spc(_address, _PC >> 8);
+        set_byte_spc(_address, _PC);
         _SP--;
         _address = 0x0100 + _SP;
         END_CYCLE(6, 1)
 
         START_CYCLE(7)
-        set_byte_spc(_address, _PC);
+        /* should we write PSW to stack here? */
         END_CYCLE(7, 1)
 
         START_CYCLE(8)
         _PC = _address2;
-        _SP--;
         END_OPCODE(1)
       }
+
 
     case 0x5F:  /* JMP abs */
       {
@@ -3352,6 +3412,36 @@ static void Execute_SPC(void)
 
         START_CYCLE(3)
         _PC = (get_byte_spc(_PC) << 8) + _address;
+        END_OPCODE(1)
+      }
+
+    case 0x7F:  /* RETI */
+      {
+        /*  6 cycles - opcode, SP increment, address load, new PSW, new PCL, */
+        /* new PCH, pop address to PC */
+        START_CYCLE(2)
+        _SP++;
+        END_CYCLE(2, 1)
+
+        START_CYCLE(3) \
+        _address = 0x0100 + _SP; \
+        END_CYCLE(3, 1) \
+
+        START_CYCLE(4) \
+        _PSW = get_byte_spc(_address);
+        spc_restore_flags();
+        _SP++;
+        _address = 0x0100 + _SP;
+        END_CYCLE(4, 1)
+
+        START_CYCLE(5) \
+        _address2 = get_byte_spc(_address);
+        _SP++;
+        _address = 0x0100 + _SP;
+        END_CYCLE(5, 1)
+
+        START_CYCLE(6)
+        _PC = (get_byte_spc(_address) << 8) + _address2;
         END_OPCODE(1)
       }
 
@@ -3393,12 +3483,30 @@ static void Execute_SPC(void)
         END_OPCODE(1)
       }
 
+    case 0xDF:  /* DAA */
+      {
+        /*  3 cycles - opcode, 2(op) */
+        START_CYCLE(2)
+        _data = _A;
+        if ((_data & 0x0F) > 9 || flag_state_spc(SPC_FLAG_H))
+        {
+         _A += 6;
+         if (_A < 6) set_flag_spc(SPC_FLAG_C);
+        }
+        END_CYCLE(2, 1)
+
+        START_CYCLE(3)
+        if (_data > 0x99 || flag_state_spc(SPC_FLAG_C))
+        {
+         _A += 0x60;
+         set_flag_spc(SPC_FLAG_C);
+        }
+        store_flags_nz(_A);
+        END_OPCODE(1)
+      }
+
 
     /* handle unhandled or invalid opcodes */
-    case 0x0F:  /* BRK */
-    case 0x7F:  /* RETI */
-    case 0xBE:  /* DAS */
-    case 0xDF:  /* DAA */
     case 0xEF:  /* SLEEP */
     case 0xFF:  /* STOP */
     default:
